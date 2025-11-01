@@ -241,6 +241,7 @@ function App() {
   const flightPathsRef = useRef([]);
   const planeEntityRef = useRef(null);
   const officeEntitiesRef = useRef([]);
+  const resultsPlanesRef = useRef([]);
 
   // Meeting planning state
   const [cities, setCities] = useState([
@@ -350,6 +351,161 @@ function App() {
 
     // Store handler for cleanup
     viewerRef.current._officeHandler = handler;
+  };
+
+  // Function to create orientation that points the nose toward the destination
+  // Uses direction vector from current position to next position
+  const createOrientationProperty = (positionProperty) => {
+    // Create a custom property that calculates orientation based on direction of travel
+    const orientationProperty = new Cesium.CallbackProperty((time, result) => {
+      if (!Cesium.defined(time)) {
+        return undefined;
+      }
+
+      const currentPosition = positionProperty.getValue(time);
+      if (!Cesium.defined(currentPosition)) {
+        return undefined;
+      }
+
+      // Get next position to calculate direction
+      const nextTime = Cesium.JulianDate.addSeconds(
+        time,
+        0.1,
+        new Cesium.JulianDate()
+      );
+      let nextPosition = positionProperty.getValue(nextTime);
+
+      // If no next position (at end), use previous position
+      if (!Cesium.defined(nextPosition)) {
+        const prevTime = Cesium.JulianDate.addSeconds(
+          time,
+          -0.1,
+          new Cesium.JulianDate()
+        );
+        const prevPosition = positionProperty.getValue(prevTime);
+        if (!Cesium.defined(prevPosition)) {
+          return Cesium.Quaternion.IDENTITY;
+        }
+        // Direction from previous to current
+        const direction = Cesium.Cartesian3.subtract(
+          currentPosition,
+          prevPosition,
+          new Cesium.Cartesian3()
+        );
+        const distance = Cesium.Cartesian3.magnitude(direction);
+        if (distance < 0.001) {
+          return Cesium.Quaternion.IDENTITY;
+        }
+
+        // Use directionToEastNorthUp to get proper orientation in Cesium's frame
+        const transform = Cesium.Transforms.eastNorthUpToFixedFrame(
+          currentPosition,
+          undefined,
+          undefined
+        );
+        const east = Cesium.Matrix4.getColumn(
+          transform,
+          0,
+          new Cesium.Cartesian3()
+        );
+        const north = Cesium.Matrix4.getColumn(
+          transform,
+          1,
+          new Cesium.Cartesian3()
+        );
+        const up = Cesium.Matrix4.getColumn(
+          transform,
+          2,
+          new Cesium.Cartesian3()
+        );
+
+        // Normalize direction
+        Cesium.Cartesian3.normalize(direction, direction);
+
+        // Project direction onto east-north plane for heading
+        const eastComponent = Cesium.Cartesian3.dot(direction, east);
+        const northComponent = Cesium.Cartesian3.dot(direction, north);
+        const upComponent = Cesium.Cartesian3.dot(direction, up);
+
+        // Calculate heading (angle in horizontal plane)
+        const heading = Math.atan2(eastComponent, northComponent);
+
+        // Calculate pitch (angle up/down)
+        const horizontalLength = Math.sqrt(
+          eastComponent * eastComponent + northComponent * northComponent
+        );
+        const pitch = Math.atan2(-upComponent, horizontalLength);
+
+        // Create quaternion from heading, pitch, roll
+        const hpr = new Cesium.HeadingPitchRoll(heading, pitch, 0.0);
+        return Cesium.Transforms.headingPitchRollQuaternion(
+          currentPosition,
+          hpr
+        );
+      }
+
+      // Calculate direction vector (from current to next position)
+      const direction = Cesium.Cartesian3.subtract(
+        nextPosition,
+        currentPosition,
+        new Cesium.Cartesian3()
+      );
+
+      const distance = Cesium.Cartesian3.magnitude(direction);
+      if (distance < 0.001) {
+        return Cesium.Quaternion.IDENTITY;
+      }
+
+      // Normalize direction
+      Cesium.Cartesian3.normalize(direction, direction);
+
+      // Get the local east-north-up frame at the current position
+      const transform = Cesium.Transforms.eastNorthUpToFixedFrame(
+        currentPosition,
+        undefined,
+        undefined
+      );
+      const east = Cesium.Matrix4.getColumn(
+        transform,
+        0,
+        new Cesium.Cartesian3()
+      );
+      const north = Cesium.Matrix4.getColumn(
+        transform,
+        1,
+        new Cesium.Cartesian3()
+      );
+      const up = Cesium.Matrix4.getColumn(
+        transform,
+        2,
+        new Cesium.Cartesian3()
+      );
+
+      // Project direction onto east-north-up frame
+      const eastComponent = Cesium.Cartesian3.dot(direction, east);
+      const northComponent = Cesium.Cartesian3.dot(direction, north);
+      const upComponent = Cesium.Cartesian3.dot(direction, up);
+
+      // Calculate heading (rotation around up axis, in east-north plane)
+      // Heading is 0 when pointing north, increases clockwise
+      const heading = Math.atan2(eastComponent, northComponent);
+
+      // Calculate pitch (rotation around east axis)
+      // Positive pitch means nose up
+      const horizontalLength = Math.sqrt(
+        eastComponent * eastComponent + northComponent * northComponent
+      );
+      const pitch = Math.atan2(-upComponent, horizontalLength);
+
+      // Roll is 0 for now (no banking)
+      const roll = 0.0;
+
+      // Create quaternion from heading, pitch, roll
+      const hpr = new Cesium.HeadingPitchRoll(heading, pitch, roll);
+      return Cesium.Transforms.headingPitchRollQuaternion(currentPosition, hpr);
+    }, false);
+
+    return orientationProperty;
   };
 
   // Initialize Cesium Viewer
@@ -752,173 +908,6 @@ function App() {
     }
   };
 
-  // Draw Flight Path Handler
-  const handleDrawPath = () => {
-    const startLatNum = parseFloat(startLat);
-    const startLonNum = parseFloat(startLon);
-    const endLatNum = parseFloat(endLat);
-    const endLonNum = parseFloat(endLon);
-
-    if (!viewerRef.current) return;
-
-    // Validate start coordinates
-    const startValidation = validateCoordinates(startLatNum, startLonNum);
-    if (!startValidation.valid) {
-      showError(startValidation.message);
-      return;
-    }
-
-    // Validate end coordinates
-    const endValidation = validateCoordinates(endLatNum, endLonNum);
-    if (!endValidation.valid) {
-      showError(endValidation.message);
-      return;
-    }
-
-    // Clear error message
-    setErrorMessage("");
-
-    // Create curved path positions
-    const positions = createCurvedPath(
-      startLonNum,
-      startLatNum,
-      endLonNum,
-      endLatNum
-    );
-
-    // Add start beacon (red point at start location)
-    const startBeacon = viewerRef.current.entities.add({
-      name: "Start Point",
-      position: Cesium.Cartesian3.fromDegrees(startLonNum, startLatNum, 0),
-      point: {
-        pixelSize: 15,
-        color: Cesium.Color.RED,
-        outlineColor: Cesium.Color.WHITE,
-        outlineWidth: 3,
-        heightReference: Cesium.HeightReference.CLAMP_TO_GROUND,
-      },
-      label: {
-        text: "START",
-        font: "14pt sans-serif",
-        fillColor: Cesium.Color.RED,
-        outlineColor: Cesium.Color.WHITE,
-        outlineWidth: 3,
-        style: Cesium.LabelStyle.FILL_AND_OUTLINE,
-        verticalOrigin: Cesium.VerticalOrigin.BOTTOM,
-        pixelOffset: new Cesium.Cartesian2(0, -30),
-        heightReference: Cesium.HeightReference.CLAMP_TO_GROUND,
-      },
-    });
-
-    // Add end beacon (red point at end location)
-    const endBeacon = viewerRef.current.entities.add({
-      name: "End Point",
-      position: Cesium.Cartesian3.fromDegrees(endLonNum, endLatNum, 0),
-      point: {
-        pixelSize: 15,
-        color: Cesium.Color.RED,
-        outlineColor: Cesium.Color.WHITE,
-        outlineWidth: 3,
-        heightReference: Cesium.HeightReference.CLAMP_TO_GROUND,
-      },
-      label: {
-        text: "END",
-        font: "14pt sans-serif",
-        fillColor: Cesium.Color.RED,
-        outlineColor: Cesium.Color.WHITE,
-        outlineWidth: 3,
-        style: Cesium.LabelStyle.FILL_AND_OUTLINE,
-        verticalOrigin: Cesium.VerticalOrigin.BOTTOM,
-        pixelOffset: new Cesium.Cartesian2(0, -30),
-        heightReference: Cesium.HeightReference.CLAMP_TO_GROUND,
-      },
-    });
-
-    // Add flight path entity
-    const flightPath = viewerRef.current.entities.add({
-      name: `Flight Path: (${startLatNum}, ${startLonNum}) to (${endLatNum}, ${endLonNum})`,
-      polyline: {
-        positions: positions,
-        width: 3,
-        material: Cesium.Color.RED,
-        clampToGround: false,
-        arcType: Cesium.ArcType.NONE,
-      },
-    });
-
-    // Create time-based animation for the plane
-    const flightDuration = 10.0; // Duration in seconds
-    const startTime = viewerRef.current.clock.currentTime;
-    const stopTime = Cesium.JulianDate.addSeconds(
-      startTime,
-      flightDuration,
-      new Cesium.JulianDate()
-    );
-
-    // Create sampled position property for animation
-    const property = new Cesium.SampledPositionProperty();
-    property.setInterpolationOptions({
-      interpolationDegree: 1,
-      interpolationAlgorithm: Cesium.LinearApproximation,
-    });
-
-    // Create orientation property that follows the direction of travel
-    const orientation = new Cesium.VelocityOrientationProperty(property);
-
-    // Sample positions along the path with time
-    const numSamples = positions.length;
-    for (let i = 0; i < numSamples; i++) {
-      const time = Cesium.JulianDate.addSeconds(
-        startTime,
-        (flightDuration * i) / (numSamples - 1),
-        new Cesium.JulianDate()
-      );
-      property.addSample(time, positions[i]);
-    }
-
-    // Remove previous plane entity if it exists
-    if (planeEntityRef.current) {
-      viewerRef.current.entities.remove(planeEntityRef.current);
-      planeEntityRef.current = null;
-    }
-
-    // Add airplane entity with 3D model from Cesium Ion
-    planeEntityRef.current = viewerRef.current.entities.add({
-      availability: new Cesium.TimeIntervalCollection([
-        new Cesium.TimeInterval({
-          start: startTime,
-          stop: stopTime,
-        }),
-      ]),
-      position: property,
-      orientation: orientation,
-      model: {
-        uri: Cesium.IonResource.fromAssetId(3995777), // Boeing 787 Dreamliner
-        minimumPixelSize: 64,
-        maximumScale: 2000,
-      },
-    });
-
-    // Store references for clearing
-    flightPathsRef.current.push(flightPath);
-    flightPathsRef.current.push(startBeacon);
-    flightPathsRef.current.push(endBeacon);
-    // Note: plane entity is stored in planeEntityRef.current and will be removed with removeAll()
-
-    // Set clock to animation time range
-    viewerRef.current.clock.startTime = startTime.clone();
-    viewerRef.current.clock.stopTime = stopTime.clone();
-    viewerRef.current.clock.currentTime = startTime.clone();
-    viewerRef.current.clock.clockRange = Cesium.ClockRange.LOOP_STOP;
-    viewerRef.current.clock.multiplier = 1;
-
-    // Zoom to the flight path
-    viewerRef.current.flyTo(flightPath);
-
-    // Start animation
-    viewerRef.current.clock.shouldAnimate = true;
-  };
-
   // Visualize meeting results on the globe
   const visualizeMeetingResults = (results) => {
     if (!viewerRef.current) return;
@@ -932,6 +921,12 @@ function App() {
       viewerRef.current.entities.remove(entity);
     });
     resultsFlightPathsRef.current = [];
+
+    // Clear previous plane entities
+    resultsPlanesRef.current.forEach((entity) => {
+      viewerRef.current.entities.remove(entity);
+    });
+    resultsPlanesRef.current = [];
 
     // Find event location coordinates
     const eventOffice = officeLocations.find(
@@ -956,7 +951,7 @@ function App() {
         scaleByDistance: new Cesium.NearFarScalar(1.5e2, 2.0, 1.5e7, 0.5),
       },
       label: {
-        text: `★ ${results.event_location} (Event Location)`,
+        text: `🏁 ${results.event_location}`,
         font: "14pt sans-serif",
         fillColor: Cesium.Color.GOLD,
         outlineColor: Cesium.Color.BLACK,
@@ -969,14 +964,17 @@ function App() {
       },
     });
 
-    // Draw flight paths from attendee cities to event location
-    Object.keys(results.attendee_travel_hours).forEach((cityName) => {
+    // Draw flight paths from attendee cities to event location and add animated planes
+    const travelTimes = Object.entries(results.attendee_travel_hours);
+    const baseStartTime = viewerRef.current.clock.currentTime;
+
+    travelTimes.forEach(([cityName, travelHours], index) => {
       const cityOffice = officeLocations.find(
         (office) => office.city === cityName
       );
       if (!cityOffice || cityOffice.city === results.event_location) return;
 
-      // Create curved path
+      // Create curved path (already returns array of Cartesian3 objects)
       const positions = createCurvedPath(
         cityOffice.lon,
         cityOffice.lat,
@@ -985,7 +983,6 @@ function App() {
       );
 
       // Add flight path (green/yellow gradient based on travel hours)
-      const travelHours = results.attendee_travel_hours[cityName];
       const color =
         travelHours < 8
           ? Cesium.Color.GREEN
@@ -1005,7 +1002,82 @@ function App() {
       });
 
       resultsFlightPathsRef.current.push(flightPath);
+
+      // Create animated plane for this flight path
+      // Calculate animation duration based on travel hours (scale it down for visualization)
+      const animationDuration = Math.max(5, Math.min(30, travelHours * 0.5)); // 5-30 seconds
+
+      // Stagger plane start times so they don't all start at once
+      const startDelay = index * 2; // 2 seconds between each plane
+      const startTime = Cesium.JulianDate.addSeconds(
+        baseStartTime,
+        startDelay,
+        new Cesium.JulianDate()
+      );
+      const stopTime = Cesium.JulianDate.addSeconds(
+        startTime,
+        animationDuration,
+        new Cesium.JulianDate()
+      );
+
+      // Create sampled position property for plane animation
+      const positionProperty = new Cesium.SampledPositionProperty();
+      positionProperty.setInterpolationOptions({
+        interpolationDegree: 2,
+        interpolationAlgorithm: Cesium.HermitePolynomialApproximation,
+      });
+
+      // Create orientation property that properly points nose toward destination
+      const orientation = createOrientationProperty(positionProperty);
+
+      // Sample positions along the path with time
+      // positions is now an array of Cartesian3 objects
+      for (let i = 0; i < positions.length; i++) {
+        const time = Cesium.JulianDate.addSeconds(
+          startTime,
+          (animationDuration * i) / (positions.length - 1),
+          new Cesium.JulianDate()
+        );
+        positionProperty.addSample(time, positions[i]);
+      }
+
+      // Add airplane entity with 3D model from local GLB file
+      const planeEntity = viewerRef.current.entities.add({
+        name: `Plane: ${cityName} to ${results.event_location}`,
+        availability: new Cesium.TimeIntervalCollection([
+          new Cesium.TimeInterval({
+            start: startTime,
+            stop: stopTime,
+          }),
+        ]),
+        position: positionProperty,
+        orientation: orientation,
+        model: {
+          uri: "/res/airplane.glb", // Local airplane GLB model
+          minimumPixelSize: 64,
+          maximumScale: 2000,
+        },
+      });
+
+      resultsPlanesRef.current.push(planeEntity);
     });
+
+    // Set clock to animation time range
+    const totalDuration = travelTimes.length * 2 + 30; // Time for all planes to complete
+    const clockStopTime = Cesium.JulianDate.addSeconds(
+      baseStartTime,
+      totalDuration,
+      new Cesium.JulianDate()
+    );
+
+    viewerRef.current.clock.startTime = baseStartTime.clone();
+    viewerRef.current.clock.stopTime = clockStopTime;
+    viewerRef.current.clock.currentTime = baseStartTime.clone();
+    viewerRef.current.clock.clockRange = Cesium.ClockRange.LOOP_STOP;
+    viewerRef.current.clock.multiplier = 1;
+
+    // Start animation
+    viewerRef.current.clock.shouldAnimate = true;
 
     // Center on event location but zoom out to show more of the globe
     // Keep the globe centered on screen while showing the event location
@@ -1055,6 +1127,12 @@ function App() {
       viewerRef.current.entities.remove(entity);
     });
     resultsFlightPathsRef.current = [];
+
+    // Clear results plane entities
+    resultsPlanesRef.current.forEach((entity) => {
+      viewerRef.current.entities.remove(entity);
+    });
+    resultsPlanesRef.current = [];
 
     flightPathsRef.current = [];
     viewerRef.current.clock.shouldAnimate = false;
