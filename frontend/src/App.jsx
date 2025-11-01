@@ -242,6 +242,7 @@ function App() {
   const planeEntityRef = useRef(null);
   const officeEntitiesRef = useRef([]);
   const resultsPlanesRef = useRef([]);
+  const originCityMarkersRef = useRef([]);
 
   // Meeting planning state
   const [cities, setCities] = useState([
@@ -265,6 +266,13 @@ function App() {
   const eventLocationEntityRef = useRef(null);
   const resultsFlightPathsRef = useRef([]);
   const [showExpandedView, setShowExpandedView] = useState(false);
+
+  // Function to show/hide office markers
+  const setOfficeMarkersVisibility = (visible) => {
+    officeEntitiesRef.current.forEach((entity) => {
+      entity.show = visible;
+    });
+  };
 
   // Function to add office location markers
   const addOfficeMarkers = () => {
@@ -912,6 +920,9 @@ function App() {
   const visualizeMeetingResults = (results) => {
     if (!viewerRef.current) return;
 
+    // Hide blue office markers
+    setOfficeMarkersVisibility(false);
+
     // Clear previous results visualization
     if (eventLocationEntityRef.current) {
       viewerRef.current.entities.remove(eventLocationEntityRef.current);
@@ -927,6 +938,12 @@ function App() {
       viewerRef.current.entities.remove(entity);
     });
     resultsPlanesRef.current = [];
+
+    // Clear previous origin city markers
+    originCityMarkersRef.current.forEach((entity) => {
+      viewerRef.current.entities.remove(entity);
+    });
+    originCityMarkersRef.current = [];
 
     // Find event location coordinates
     const eventOffice = officeLocations.find(
@@ -982,13 +999,13 @@ function App() {
         eventOffice.lat
       );
 
-      // Add flight path (green/yellow gradient based on travel hours)
+      // Add flight path (subtle colors based on travel hours)
       const color =
         travelHours < 8
-          ? Cesium.Color.GREEN
+          ? Cesium.Color.fromBytes(100, 180, 100, 150) // Subtle green
           : travelHours < 16
-          ? Cesium.Color.YELLOW
-          : Cesium.Color.ORANGE;
+          ? Cesium.Color.fromBytes(180, 150, 100, 150) // Subtle yellow/orange
+          : Cesium.Color.fromBytes(180, 120, 100, 150); // Subtle orange
 
       const flightPath = viewerRef.current.entities.add({
         name: `Flight: ${cityName} to ${results.event_location}`,
@@ -1002,6 +1019,33 @@ function App() {
       });
 
       resultsFlightPathsRef.current.push(flightPath);
+
+      // Add colored marker for origin city (different color scheme than flight paths)
+      const originMarkerColor =
+        travelHours < 8
+          ? Cesium.Color.CYAN
+          : travelHours < 16
+          ? Cesium.Color.ORANGE
+          : Cesium.Color.MAGENTA;
+
+      const marker = viewerRef.current.entities.add({
+        name: `Origin: ${cityName}`,
+        position: Cesium.Cartesian3.fromDegrees(
+          cityOffice.lon,
+          cityOffice.lat,
+          0
+        ),
+        point: {
+          pixelSize: 22,
+          color: originMarkerColor,
+          outlineColor: Cesium.Color.WHITE,
+          outlineWidth: 3,
+          heightReference: Cesium.HeightReference.CLAMP_TO_GROUND,
+          scaleByDistance: new Cesium.NearFarScalar(1.5e2, 2.0, 1.5e7, 0.5),
+        },
+      });
+
+      originCityMarkersRef.current.push(marker);
 
       // Create animated plane for this flight path
       // Calculate animation duration based on travel hours (scale it down for visualization)
@@ -1134,10 +1178,19 @@ function App() {
     });
     resultsPlanesRef.current = [];
 
+    // Clear origin city markers
+    originCityMarkersRef.current.forEach((entity) => {
+      viewerRef.current.entities.remove(entity);
+    });
+    originCityMarkersRef.current = [];
+
     flightPathsRef.current = [];
     viewerRef.current.clock.shouldAnimate = false;
     setErrorMessage("");
     setMeetingResults(null);
+
+    // Show blue office markers again
+    setOfficeMarkersVisibility(true);
   };
 
   // Reset View Handler - Recenter globe to default view
