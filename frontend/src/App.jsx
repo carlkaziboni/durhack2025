@@ -370,15 +370,16 @@ function App() {
       vrButton: false,
     });
 
-    // Use OpenStreetMap imagery which doesn't require Ion token
+    // Use CartoDB Dark Matter - a darker, subtle texture
     try {
-      const osmImagery = new Cesium.OpenStreetMapImageryProvider({
-        url: "https://a.tile.openstreetmap.org/",
+      const cartoImagery = new Cesium.UrlTemplateImageryProvider({
+        url: "https://cartodb-basemaps-a.global.ssl.fastly.net/dark_all/{z}/{x}/{y}.png",
+        maximumLevel: 18,
       });
       viewerRef.current.imageryLayers.removeAll();
-      viewerRef.current.imageryLayers.addImageryProvider(osmImagery);
+      viewerRef.current.imageryLayers.addImageryProvider(cartoImagery);
     } catch (error) {
-      console.warn("Could not set OpenStreetMap imagery, using default");
+      console.warn("Could not set CartoDB imagery, using default");
     }
 
     // Add office location markers
