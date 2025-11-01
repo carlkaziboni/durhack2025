@@ -32,6 +32,7 @@ body {
   grid-template-rows: 100vh;
   width: 100%;
   height: 100vh;
+  position: relative;
 }
 
 .controlPanel {
@@ -286,4 +287,145 @@ body {
   background: rgba(59, 209, 165, 0.1);
   border: 1px solid rgba(59, 209, 165, 0.3);
   border-radius: 8px;
+}
+
+/* Office hover card styling */
+.officeHoverCard {
+  position: absolute;
+  max-width: 300px;
+}
+
+.officeHoverCardContent {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 12px 16px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
+  backdrop-filter: blur(10px);
+}
+
+.officeHoverCardTitle {
+  margin: 0 0 8px 0;
+  font-size: 1rem;
+  font-weight: 600;
+  color: var(--text);
+  letter-spacing: 0.2px;
+}
+
+.officeHoverCardAddress {
+  margin: 0;
+  font-size: 0.85rem;
+  color: var(--muted);
+  line-height: 1.4;
+}
+
+/* Results section styling */
+.resultsSection {
+  margin-top: 16px;
+}
+
+.resultCard {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 12px;
+  margin-bottom: 12px;
+}
+
+.resultTitle {
+  margin: 0 0 8px 0;
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: var(--text);
+}
+
+.resultValue {
+  margin: 0;
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: var(--accent);
+}
+
+.co2Value {
+  color: var(--warn);
+  font-size: 1.2rem;
+}
+
+.dateInfo {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.dateLabel {
+  font-size: 0.85rem;
+  color: var(--muted);
+  margin-right: 8px;
+}
+
+.dateValue {
+  font-size: 0.9rem;
+  color: var(--text);
+}
+
+.statsGrid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+
+.statItem {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 8px;
+  background: rgba(122, 162, 255, 0.1);
+  border-radius: 8px;
+  border: 1px solid rgba(122, 162, 255, 0.2);
+}
+
+.statLabel {
+  font-size: 0.85rem;
+  color: var(--muted);
+}
+
+.statValue {
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: var(--accent);
+}
+
+.cityTravelList {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.cityTravelItem {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 8px 12px;
+  background: rgba(122, 162, 255, 0.1);
+  border-radius: 8px;
+  border: 1px solid rgba(122, 162, 255, 0.2);
+}
+
+.cityName {
+  font-size: 0.9rem;
+  color: var(--text);
+  font-weight: 500;
+}
+
+.cityHours {
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: var(--accent);
+}
+
+/* Disabled button styling */
+.controlPanel button:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+  filter: none;
 }

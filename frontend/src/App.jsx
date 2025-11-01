@@ -97,6 +97,143 @@ const officeLocations = [
   },
 ];
 
+// Mock backend function - generates realistic response based on input
+const mockBackend = (meetingData) => {
+  // Simulate API delay
+  return new Promise((resolve) => {
+    setTimeout(() => {
+      const attendeeCities = Object.keys(meetingData.attendees);
+
+      // Find best location (simplified: pick first available office or Dubai as default)
+      const availableLocations = officeLocations.map((office) => office.city);
+      let eventLocation = "Dubai"; // Default
+
+      // Try to find a location that's in the office list
+      if (availableLocations.length > 0) {
+        // Simple heuristic: pick the location that appears most in attendee list
+        // or pick a central location
+        const attendeeOffices = attendeeCities.filter((city) =>
+          availableLocations.includes(city)
+        );
+        if (attendeeOffices.length > 0) {
+          eventLocation = attendeeOffices[0];
+        } else {
+          // Pick a central location from available offices
+          eventLocation = availableLocations.includes("Dubai")
+            ? "Dubai"
+            : availableLocations.includes("London")
+            ? "London"
+            : availableLocations[0];
+        }
+      }
+
+      // Find event location coordinates
+      const eventOffice = officeLocations.find(
+        (office) => office.city === eventLocation
+      );
+
+      // Calculate realistic travel hours (mock data)
+      const attendeeTravelHours = {};
+      let totalHours = 0;
+      let minHours = Infinity;
+      let maxHours = 0;
+
+      attendeeCities.forEach((city) => {
+        // Mock travel hours based on distance
+        const cityOffice = officeLocations.find(
+          (office) => office.city === city
+        );
+        if (cityOffice && eventOffice) {
+          // Simple distance-based calculation
+          const latDiff = Math.abs(cityOffice.lat - eventOffice.lat);
+          const lonDiff = Math.abs(cityOffice.lon - eventOffice.lon);
+          const distance = Math.sqrt(latDiff * latDiff + lonDiff * lonDiff);
+          const hours = Math.max(
+            2,
+            Math.min(
+              24,
+              Math.round((distance * 15 + Math.random() * 5) * 10) / 10
+            )
+          );
+
+          attendeeTravelHours[city] = hours;
+          totalHours += hours;
+          minHours = Math.min(minHours, hours);
+          maxHours = Math.max(maxHours, hours);
+        } else {
+          // Default if city not found
+          const hours = 8 + Math.random() * 12;
+          attendeeTravelHours[city] = Math.round(hours * 10) / 10;
+          totalHours += hours;
+          minHours = Math.min(minHours, hours);
+          maxHours = Math.max(maxHours, hours);
+        }
+      });
+
+      const avgHours =
+        Math.round((totalHours / attendeeCities.length) * 10) / 10;
+      const sortedHours = Object.values(attendeeTravelHours).sort(
+        (a, b) => a - b
+      );
+      const medianHours =
+        sortedHours.length % 2 === 0
+          ? (sortedHours[sortedHours.length / 2 - 1] +
+              sortedHours[sortedHours.length / 2]) /
+            2
+          : sortedHours[Math.floor(sortedHours.length / 2)];
+
+      // Calculate CO2 (mock: roughly 0.2 kg CO2 per km, assume 800 km per hour of flight)
+      const totalCO2 = Math.round(totalHours * 800 * 0.2);
+
+      // Calculate event dates (mock: use availability window start, add some buffer)
+      const availabilityStart = new Date(meetingData.availability_window.start);
+      const availabilityEnd = new Date(meetingData.availability_window.end);
+      const eventDurationMs =
+        (meetingData.event_duration.days * 24 +
+          meetingData.event_duration.hours) *
+        60 *
+        60 *
+        1000;
+
+      // Event starts 1 day after availability start (to account for travel)
+      const eventStart = new Date(availabilityStart);
+      eventStart.setDate(eventStart.getDate() + 1);
+      eventStart.setHours(9, 30, 0, 0); // Start at 9:30 AM
+
+      const eventEnd = new Date(eventStart.getTime() + eventDurationMs);
+
+      // Event span includes travel time (starts earlier, ends later)
+      const eventSpanStart = new Date(eventStart);
+      eventSpanStart.setDate(eventSpanStart.getDate() - 1);
+      eventSpanStart.setHours(17, 30, 0, 0); // Previous day 5:30 PM
+
+      const eventSpanEnd = new Date(eventEnd);
+      eventSpanEnd.setDate(eventSpanEnd.getDate() + 1);
+      eventSpanEnd.setHours(22, 27, 0, 0); // Next day 10:27 PM
+
+      const result = {
+        event_location: eventLocation,
+        event_dates: {
+          start: eventStart.toISOString(),
+          end: eventEnd.toISOString(),
+        },
+        event_span: {
+          start: eventSpanStart.toISOString(),
+          end: eventSpanEnd.toISOString(),
+        },
+        total_co2: totalCO2,
+        average_travel_hours: avgHours,
+        median_travel_hours: Math.round(medianHours * 10) / 10,
+        max_travel_hours: Math.round(maxHours * 10) / 10,
+        min_travel_hours: Math.round(minHours * 10) / 10,
+        attendee_travel_hours: attendeeTravelHours,
+      };
+
+      resolve(result);
+    }, 1500); // Simulate 1.5 second API delay
+  });
+};
+
 function App() {
   const cesiumContainerRef = useRef(null);
   const viewerRef = useRef(null);
@@ -115,6 +252,16 @@ function App() {
   const [eventDurationHours, setEventDurationHours] = useState(4);
   const [errorMessage, setErrorMessage] = useState("");
   const [successMessage, setSuccessMessage] = useState("");
+
+  // Hover card state
+  const [hoveredOffice, setHoveredOffice] = useState(null);
+  const [hoverCardPosition, setHoverCardPosition] = useState({ x: 0, y: 0 });
+
+  // Results state
+  const [meetingResults, setMeetingResults] = useState(null);
+  const [isLoading, setIsLoading] = useState(false);
+  const eventLocationEntityRef = useRef(null);
+  const resultsFlightPathsRef = useRef([]);
 
   // Function to add office location markers
   const addOfficeMarkers = () => {
@@ -145,45 +292,57 @@ function App() {
           scaleByDistance: new Cesium.NearFarScalar(1.5e2, 1.5, 1.5e7, 0.5),
         },
         label: {
-          text: office.city,
-          font: "12pt sans-serif",
-          fillColor: Cesium.Color.WHITE,
-          outlineColor: Cesium.Color.BLACK,
-          outlineWidth: 2,
-          style: Cesium.LabelStyle.FILL_AND_OUTLINE,
-          verticalOrigin: Cesium.VerticalOrigin.BOTTOM,
-          pixelOffset: new Cesium.Cartesian2(0, -30),
-          heightReference: Cesium.HeightReference.CLAMP_TO_GROUND,
-          show: false, // Hidden by default, shown on hover
-          scale: 0.8,
+          show: false, // Labels are hidden, we use hover card instead
         },
-        description: office.address, // Full address in description
+        // Store office data for hover card
+        officeData: office,
       });
 
       officeEntitiesRef.current.push(entity);
     });
 
-    // Add hover event handlers to show/hide labels
+    // Add hover event handlers to show/hide hover card
     const handler = new Cesium.ScreenSpaceEventHandler(
       viewerRef.current.scene.canvas
     );
 
     handler.setInputAction((movement) => {
       const pickedObject = viewerRef.current.scene.pick(movement.endPosition);
-      if (pickedObject && Cesium.defined(pickedObject.id)) {
-        // Show label for hovered entity
-        officeEntitiesRef.current.forEach((entity) => {
-          if (entity === pickedObject.id) {
-            entity.label.show = true;
-          } else {
-            entity.label.show = false;
+      if (
+        pickedObject &&
+        Cesium.defined(pickedObject.id) &&
+        pickedObject.id.officeData
+      ) {
+        // Check if it's an office entity
+        const isOfficeEntity = officeEntitiesRef.current.includes(
+          pickedObject.id
+        );
+        if (isOfficeEntity) {
+          const office = pickedObject.id.officeData;
+          // Convert 3D position to screen coordinates (relative to canvas)
+          const screenPosition =
+            Cesium.SceneTransforms.wgs84ToWindowCoordinates(
+              viewerRef.current.scene,
+              pickedObject.id.position.getValue(
+                viewerRef.current.clock.currentTime
+              )
+            );
+
+          if (screenPosition) {
+            // Get canvas position relative to viewport
+            const canvas = viewerRef.current.scene.canvas;
+            const rect = canvas.getBoundingClientRect();
+
+            setHoveredOffice(office);
+            setHoverCardPosition({
+              x: screenPosition.x + rect.left,
+              y: screenPosition.y + rect.top - 50, // Position above the marker
+            });
           }
-        });
+        }
       } else {
-        // Hide all labels when not hovering
-        officeEntitiesRef.current.forEach((entity) => {
-          entity.label.show = false;
-        });
+        // Hide hover card when not hovering
+        setHoveredOffice(null);
       }
     }, Cesium.ScreenSpaceEventType.MOUSE_MOVE);
 
@@ -410,13 +569,30 @@ function App() {
     const meetingData = prepareMeetingData();
     if (!meetingData) return;
 
-    // TODO: Replace with actual backend API endpoint
-    console.log("Meeting data to send:", JSON.stringify(meetingData, null, 2));
+    setIsLoading(true);
+    setErrorMessage("");
+    setSuccessMessage("");
 
-    // For now, just show success message
-    showSuccess("Meeting plan submitted successfully!");
+    try {
+      // TODO: Replace with actual backend API endpoint
+      // For now, use mock backend
+      const result = await mockBackend(meetingData);
 
-    // TODO: Call backend API
+      // Store results
+      setMeetingResults(result);
+
+      // Visualize results on globe
+      visualizeMeetingResults(result);
+
+      showSuccess("Meeting plan calculated successfully!");
+    } catch (error) {
+      showError("Failed to calculate meeting plan: " + error.message);
+      console.error("Error:", error);
+    } finally {
+      setIsLoading(false);
+    }
+
+    // TODO: Replace mock backend with actual API call
     // try {
     //   const response = await fetch('YOUR_BACKEND_API_URL', {
     //     method: 'POST',
@@ -426,9 +602,13 @@ function App() {
     //     body: JSON.stringify(meetingData),
     //   });
     //   const result = await response.json();
-    //   // Handle result - visualize meeting location and flight paths
+    //   setMeetingResults(result);
+    //   visualizeMeetingResults(result);
+    //   showSuccess("Meeting plan calculated successfully!");
     // } catch (error) {
-    //   showError("Failed to submit meeting plan: " + error.message);
+    //   showError("Failed to calculate meeting plan: " + error.message);
+    // } finally {
+    //   setIsLoading(false);
     // }
   };
 
@@ -736,6 +916,115 @@ function App() {
     viewerRef.current.clock.shouldAnimate = true;
   };
 
+  // Visualize meeting results on the globe
+  const visualizeMeetingResults = (results) => {
+    if (!viewerRef.current) return;
+
+    // Clear previous results visualization
+    if (eventLocationEntityRef.current) {
+      viewerRef.current.entities.remove(eventLocationEntityRef.current);
+      eventLocationEntityRef.current = null;
+    }
+    resultsFlightPathsRef.current.forEach((entity) => {
+      viewerRef.current.entities.remove(entity);
+    });
+    resultsFlightPathsRef.current = [];
+
+    // Find event location coordinates
+    const eventOffice = officeLocations.find(
+      (office) => office.city === results.event_location
+    );
+    if (!eventOffice) return;
+
+    // Add event location marker (green/star marker)
+    eventLocationEntityRef.current = viewerRef.current.entities.add({
+      name: `Event Location: ${results.event_location}`,
+      position: Cesium.Cartesian3.fromDegrees(
+        eventOffice.lon,
+        eventOffice.lat,
+        0
+      ),
+      point: {
+        pixelSize: 24,
+        color: Cesium.Color.GOLD,
+        outlineColor: Cesium.Color.WHITE,
+        outlineWidth: 4,
+        heightReference: Cesium.HeightReference.CLAMP_TO_GROUND,
+        scaleByDistance: new Cesium.NearFarScalar(1.5e2, 2.0, 1.5e7, 0.5),
+      },
+      label: {
+        text: `★ ${results.event_location} (Event Location)`,
+        font: "14pt sans-serif",
+        fillColor: Cesium.Color.GOLD,
+        outlineColor: Cesium.Color.BLACK,
+        outlineWidth: 3,
+        style: Cesium.LabelStyle.FILL_AND_OUTLINE,
+        verticalOrigin: Cesium.VerticalOrigin.BOTTOM,
+        pixelOffset: new Cesium.Cartesian2(0, -35),
+        heightReference: Cesium.HeightReference.CLAMP_TO_GROUND,
+        show: true,
+      },
+    });
+
+    // Draw flight paths from attendee cities to event location
+    Object.keys(results.attendee_travel_hours).forEach((cityName) => {
+      const cityOffice = officeLocations.find(
+        (office) => office.city === cityName
+      );
+      if (!cityOffice || cityOffice.city === results.event_location) return;
+
+      // Create curved path
+      const positions = createCurvedPath(
+        cityOffice.lon,
+        cityOffice.lat,
+        eventOffice.lon,
+        eventOffice.lat
+      );
+
+      // Add flight path (green/yellow gradient based on travel hours)
+      const travelHours = results.attendee_travel_hours[cityName];
+      const color =
+        travelHours < 8
+          ? Cesium.Color.GREEN
+          : travelHours < 16
+          ? Cesium.Color.YELLOW
+          : Cesium.Color.ORANGE;
+
+      const flightPath = viewerRef.current.entities.add({
+        name: `Flight: ${cityName} to ${results.event_location}`,
+        polyline: {
+          positions: positions,
+          width: 2,
+          material: color,
+          clampToGround: false,
+          arcType: Cesium.ArcType.NONE,
+        },
+      });
+
+      resultsFlightPathsRef.current.push(flightPath);
+    });
+
+    // Center on event location but zoom out to show more of the globe
+    // Keep the globe centered on screen while showing the event location
+    if (eventLocationEntityRef.current) {
+      // Use a high altitude with top-down view to keep globe centered
+      // Similar to reset view but centered on event location
+      viewerRef.current.camera.flyTo({
+        destination: Cesium.Cartesian3.fromDegrees(
+          eventOffice.lon,
+          eventOffice.lat,
+          20000000 // High altitude to zoom out (20 million meters)
+        ),
+        orientation: {
+          heading: Cesium.Math.toRadians(0),
+          pitch: Cesium.Math.toRadians(-90), // Top-down view keeps globe centered
+          roll: 0.0,
+        },
+        duration: 2.0, // Smooth 2 second animation
+      });
+    }
+  };
+
   // Clear All Paths Handler
   const handleClearPaths = () => {
     if (!viewerRef.current) return;
@@ -754,9 +1043,20 @@ function App() {
     // Reset plane entity reference
     planeEntityRef.current = null;
 
+    // Clear results visualization
+    if (eventLocationEntityRef.current) {
+      viewerRef.current.entities.remove(eventLocationEntityRef.current);
+      eventLocationEntityRef.current = null;
+    }
+    resultsFlightPathsRef.current.forEach((entity) => {
+      viewerRef.current.entities.remove(entity);
+    });
+    resultsFlightPathsRef.current = [];
+
     flightPathsRef.current = [];
     viewerRef.current.clock.shouldAnimate = false;
     setErrorMessage("");
+    setMeetingResults(null);
   };
 
   // Reset View Handler - Recenter globe to default view
@@ -910,10 +1210,111 @@ function App() {
           {successMessage && (
             <div className="successMessage">{successMessage}</div>
           )}
-          <button className="submitBtn" onClick={handleSubmitMeeting}>
-            Plan Meeting
+          <button
+            className="submitBtn"
+            onClick={handleSubmitMeeting}
+            disabled={isLoading}
+          >
+            {isLoading ? "Calculating..." : "Plan Meeting"}
           </button>
         </div>
+
+        {/* Results Display */}
+        {meetingResults && (
+          <div className="section resultsSection">
+            <h3 style={{ marginBottom: "16px" }}>Meeting Plan Results</h3>
+
+            {/* Event Location */}
+            <div className="resultCard">
+              <h4 className="resultTitle">📍 Event Location</h4>
+              <p className="resultValue">{meetingResults.event_location}</p>
+            </div>
+
+            {/* Dates */}
+            <div className="resultCard">
+              <h4 className="resultTitle">📅 Event Dates</h4>
+              <div className="dateInfo">
+                <div>
+                  <span className="dateLabel">Start:</span>
+                  <span className="dateValue">
+                    {new Date(
+                      meetingResults.event_dates.start
+                    ).toLocaleString()}
+                  </span>
+                </div>
+                <div>
+                  <span className="dateLabel">End:</span>
+                  <span className="dateValue">
+                    {new Date(meetingResults.event_dates.end).toLocaleString()}
+                  </span>
+                </div>
+              </div>
+              <div className="dateInfo" style={{ marginTop: "8px" }}>
+                <div>
+                  <span className="dateLabel">Event Span:</span>
+                  <span className="dateValue">
+                    {new Date(meetingResults.event_span.start).toLocaleString()}{" "}
+                    → {new Date(meetingResults.event_span.end).toLocaleString()}
+                  </span>
+                </div>
+              </div>
+            </div>
+
+            {/* CO2 Emissions */}
+            <div className="resultCard">
+              <h4 className="resultTitle">🌍 Total CO₂ Emissions</h4>
+              <p className="resultValue co2Value">
+                {meetingResults.total_co2} kg CO₂
+              </p>
+            </div>
+
+            {/* Travel Hours Statistics */}
+            <div className="resultCard">
+              <h4 className="resultTitle">✈️ Travel Time Statistics</h4>
+              <div className="statsGrid">
+                <div className="statItem">
+                  <span className="statLabel">Average:</span>
+                  <span className="statValue">
+                    {meetingResults.average_travel_hours} hrs
+                  </span>
+                </div>
+                <div className="statItem">
+                  <span className="statLabel">Median:</span>
+                  <span className="statValue">
+                    {meetingResults.median_travel_hours} hrs
+                  </span>
+                </div>
+                <div className="statItem">
+                  <span className="statLabel">Min:</span>
+                  <span className="statValue">
+                    {meetingResults.min_travel_hours} hrs
+                  </span>
+                </div>
+                <div className="statItem">
+                  <span className="statLabel">Max:</span>
+                  <span className="statValue">
+                    {meetingResults.max_travel_hours} hrs
+                  </span>
+                </div>
+              </div>
+            </div>
+
+            {/* Per-City Travel Hours */}
+            <div className="resultCard">
+              <h4 className="resultTitle">🛫 Travel Hours by City</h4>
+              <div className="cityTravelList">
+                {Object.entries(meetingResults.attendee_travel_hours).map(
+                  ([city, hours]) => (
+                    <div key={city} className="cityTravelItem">
+                      <span className="cityName">{city}:</span>
+                      <span className="cityHours">{hours} hrs</span>
+                    </div>
+                  )
+                )}
+              </div>
+            </div>
+          </div>
+        )}
 
         <div className="section">
           <button className="clearBtn" onClick={handleClearPaths}>
@@ -926,6 +1327,26 @@ function App() {
       </div>
 
       <div ref={cesiumContainerRef} className="cesiumContainer" />
+
+      {/* Hover card for office markers - positioned fixed to viewport */}
+      {hoveredOffice && (
+        <div
+          className="officeHoverCard"
+          style={{
+            position: "fixed",
+            left: `${hoverCardPosition.x}px`,
+            top: `${hoverCardPosition.y}px`,
+            transform: "translate(-50%, -100%)",
+            pointerEvents: "none",
+            zIndex: 1000,
+          }}
+        >
+          <div className="officeHoverCardContent">
+            <h4 className="officeHoverCardTitle">{hoveredOffice.city}</h4>
+            <p className="officeHoverCardAddress">{hoveredOffice.address}</p>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
