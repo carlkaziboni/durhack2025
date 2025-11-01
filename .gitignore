@@ -1,4 +1,5 @@
 backend/__pycache__/main.cpython-310.pyc
+<<<<<<< HEAD
 .vscode/settings.json
 data/01.csv
 data/02.csv
@@ -31,3 +32,37 @@ data/28.csv
 data/29.csv
 data/30.csv
 data/31.csv
+=======
+reinforcementlearning/12/01.csv
+reinforcementlearning/12/02.csv
+reinforcementlearning/12/03.csv
+reinforcementlearning/12/04.csv
+reinforcementlearning/12/05.csv
+reinforcementlearning/12/06.csv
+reinforcementlearning/12/07.csv
+reinforcementlearning/12/08.csv
+reinforcementlearning/12/09.csv
+reinforcementlearning/12/10.csv
+reinforcementlearning/12/11.csv
+reinforcementlearning/12/12.csv
+reinforcementlearning/12/13.csv
+reinforcementlearning/12/14.csv
+reinforcementlearning/12/15.csv
+reinforcementlearning/12/16.csv
+reinforcementlearning/12/17.csv
+reinforcementlearning/12/18.csv
+reinforcementlearning/12/19.csv
+reinforcementlearning/12/20.csv
+reinforcementlearning/12/21.csv
+reinforcementlearning/12/22.csv
+reinforcementlearning/12/23.csv
+reinforcementlearning/12/24.csv
+reinforcementlearning/12/25.csv
+reinforcementlearning/12/26.csv
+reinforcementlearning/12/27.csv
+reinforcementlearning/12/28.csv
+reinforcementlearning/12/29.csv
+reinforcementlearning/12/30.csv
+reinforcementlearning/12/31.csv
+.DS_Store
+>>>>>>> refs/remotes/origin/main
