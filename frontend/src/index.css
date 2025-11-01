@@ -1,3 +1,7 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
 :root {
   --bg: #0b1020;
   --panel: #121833;
@@ -118,7 +122,6 @@ body {
   border-color: var(--accent);
   background: #0e1532;
 }
-
 
 .controlPanel input:focus {
   outline: none;

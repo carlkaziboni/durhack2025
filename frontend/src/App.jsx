@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import * as Cesium from "cesium";
 import "./index.css";
+import ExpandedView from "./ExpandedView";
 
 // Set your Cesium Ion access token (optional)
 // You can get a free token at https://cesium.com/ion/
@@ -262,6 +263,7 @@ function App() {
   const [isLoading, setIsLoading] = useState(false);
   const eventLocationEntityRef = useRef(null);
   const resultsFlightPathsRef = useRef([]);
+  const [showExpandedView, setShowExpandedView] = useState(false);
 
   // Function to add office location markers
   const addOfficeMarkers = () => {
@@ -1229,6 +1231,13 @@ function App() {
             <div className="resultCard">
               <h4 className="resultTitle">📍 Event Location</h4>
               <p className="resultValue">{meetingResults.event_location}</p>
+              <button
+                className="submitBtn"
+                onClick={() => setShowExpandedView(true)}
+                style={{ marginTop: "10px", width: "100%" }}
+              >
+                View Expanded Details →
+              </button>
             </div>
 
             {/* Dates */}
@@ -1347,6 +1356,14 @@ function App() {
             <p className="officeHoverCardAddress">{hoveredOffice.address}</p>
           </div>
         </div>
+      )}
+
+      {/* Expanded View Modal */}
+      {showExpandedView && (
+        <ExpandedView
+          meetingResults={meetingResults}
+          onClose={() => setShowExpandedView(false)}
+        />
       )}
     </div>
   );
