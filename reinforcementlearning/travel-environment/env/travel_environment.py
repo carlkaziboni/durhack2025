@@ -1,6 +1,7 @@
 from pettingzoo import ParallelEnv
 from gymnasium import spaces
 import numpy as np
+from datetime import datetime, timedelta
 
 class TravelEnvironment(ParallelEnv):
 
@@ -11,6 +12,22 @@ class TravelEnvironment(ParallelEnv):
     def __init__(self, scenario):
         super().__init__()
         self.scenario = scenario
+        
+        # Extract temporal information from availability window
+        self.availability_start = datetime.fromisoformat(scenario["availability_window"]["start"].replace('Z', '+00:00'))
+        self.availability_end = datetime.fromisoformat(scenario["availability_window"]["end"].replace('Z', '+00:00'))
+        
+        # Get day of week (0=Monday, 6=Sunday)
+        self.start_day_of_week = self.availability_start.weekday()
+        self.end_day_of_week = self.availability_end.weekday()
+        
+        # Extract event duration
+        self.event_duration_days = scenario["event_duration"]["days"]
+        self.event_duration_hours = scenario["event_duration"]["hours"]
+        self.total_event_hours = self.event_duration_days * 24 + self.event_duration_hours
+        
+        # Calculate total availability window in days
+        self.availability_window_days = (self.availability_end - self.availability_start).days
 
         # Fixed candidate locations (QRT locations)
         self.candidate_locations = [
@@ -105,8 +122,10 @@ class TravelEnvironment(ParallelEnv):
         self.travel_time = self.travel_matrix
 
         self.action_spaces = {agent: spaces.Discrete(len(self.candidate_locations)) for agent in self.agents}
-        # Observation space: 6 features per candidate location (distance, timezone, flight_time, co2, price, combined)
-        self.observation_spaces = {agent: spaces.Box(low=0, high=1, shape=(len(self.candidate_locations) * 6,), dtype=np.float32) for agent in self.agents}
+        # Observation space: 6 features per candidate location + 3 temporal features
+        # (distance, timezone, flight_time, co2, price, combined) * num_locations + (start_day, end_day, event_duration)
+        obs_size = len(self.candidate_locations) * 6 + 3
+        self.observation_spaces = {agent: spaces.Box(low=0, high=1, shape=(obs_size,), dtype=np.float32) for agent in self.agents}
 
         self.reset()
 
@@ -177,6 +196,13 @@ class TravelEnvironment(ParallelEnv):
             obs_features.extend([distance, timezone, flight_time, co2, price, 
                                distance + timezone + flight_time + co2 + price])
         
+        # Add temporal features (normalized)
+        obs_features.extend([
+            self.start_day_of_week / 6.0,           # Day of week (0-6) normalized
+            self.end_day_of_week / 6.0,             # Day of week (0-6) normalized
+            self.total_event_hours / 24.0           # Event duration normalized to days
+        ])
+        
         obs = np.array(obs_features, dtype=np.float32)
         
         # Normalize observations to [0, 1] range
@@ -219,6 +245,16 @@ class TravelEnvironment(ParallelEnv):
                 0.25 * (co2 / 10) +              # CO2 contribution (scaled down)
                 0.25 * (price / 100)             # Price contribution (scaled down)
             )
+            
+            # Add temporal penalty: flight should arrive at least 1 day before event
+            # This encourages selecting locations where agents can arrive comfortably before the event
+            required_buffer_hours = 24  # 1 day buffer after event duration
+            total_required_time = flight_time + self.total_event_hours + required_buffer_hours
+            
+            # If total time exceeds availability window, add penalty
+            if total_required_time > (self.availability_window_days * 24):
+                time_overflow_penalty = (total_required_time - (self.availability_window_days * 24)) / 24
+                agent_costs[agent] += 0.5 * time_overflow_penalty  # Penalty for time constraint violation
         
         # Calculate variation penalty (standard deviation of costs)
         costs_array = np.array(list(agent_costs.values()))
@@ -234,8 +270,17 @@ class TravelEnvironment(ParallelEnv):
         # Get observations (though episode is done)
         observations = {agent: self.observe(agent) for agent in self.agents}
         
-        # Prepare infos
-        self.infos = {agent: {"chosen_city": chosen_city} for agent in self.agents}
+        # Prepare infos with additional temporal information
+        self.infos = {
+            agent: {
+                "chosen_city": chosen_city,
+                "start_day": ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"][self.start_day_of_week],
+                "end_day": ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"][self.end_day_of_week],
+                "event_duration_hours": self.total_event_hours,
+                "availability_window_days": self.availability_window_days
+            } 
+            for agent in self.agents
+        }
         
         # Prepare truncated dict (required for Gymnasium API)
         truncated = {agent: False for agent in self.agents}
