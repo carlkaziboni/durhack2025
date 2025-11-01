@@ -1078,21 +1078,26 @@ function App() {
   };
 
   return (
-    <div className="appContainer">
-      <div className="controlPanel">
-        <h3>Meeting Planner</h3>
+    <div className="grid grid-cols-[380px_1fr] h-screen w-full relative">
+      <div className="p-6 bg-[var(--panel)] border-r border-[var(--border)] overflow-y-auto">
+        <h3 className="text-xl m-0 mb-6 text-[var(--text)] font-semibold">
+          Meeting Planner
+        </h3>
 
-        <div className="section">
-          <h4>Attendees</h4>
+        <div className="bg-[var(--card)] border border-[var(--border)] rounded-lg p-4 mb-4">
+          <h4 className="text-[var(--muted)] text-xs uppercase tracking-wide m-0 mb-3 font-medium">
+            Attendees
+          </h4>
           {cities.map((cityData) => (
-            <div key={cityData.id} className="cityAttendeeRow">
+            <div key={cityData.id} className="flex gap-2 mb-3 items-center">
               <select
                 value={cityData.city}
                 onChange={(e) =>
                   updateCity(cityData.id, "city", e.target.value)
                 }
+                className="flex-[2] w-full px-3 py-2 border border-[var(--border)] rounded bg-[#0c1328] text-[var(--text)] text-sm cursor-pointer transition-colors duration-150 focus:outline-none focus:ring-2 focus:ring-[var(--accent)]"
               >
-                <option value="">Select office location...</option>
+                <option value="">Select location...</option>
                 {officeLocations.map((office) => (
                   <option key={office.city} value={office.city}>
                     {office.city}
@@ -1101,7 +1106,7 @@ function App() {
               </select>
               <input
                 type="number"
-                placeholder="Count"
+                placeholder="#"
                 value={cityData.attendees}
                 min="1"
                 onChange={(e) =>
@@ -1111,40 +1116,55 @@ function App() {
                     parseInt(e.target.value) || 0
                   )
                 }
+                className="flex-1 min-w-[70px] w-full px-3 py-2 border border-[var(--border)] rounded bg-[#0c1328] text-[var(--text)] text-sm transition-colors duration-150 focus:outline-none focus:ring-2 focus:ring-[var(--accent)]"
               />
-              <button onClick={() => removeCity(cityData.id)}>×</button>
+              <button
+                onClick={() => removeCity(cityData.id)}
+                className="w-auto min-w-[36px] px-3 py-2 border border-red-600/30 bg-red-600/10 text-red-400 rounded hover:bg-red-600/20 hover:border-red-600/50 transition-colors font-medium"
+              >
+                ×
+              </button>
             </div>
           ))}
-          <button className="addCityButton" onClick={addCity}>
-            + Add City
+          <button
+            onClick={addCity}
+            className="w-full py-2 px-4 bg-[var(--accent)]/10 border border-[var(--accent)]/30 text-[var(--accent)] rounded hover:bg-[var(--accent)]/20 hover:border-[var(--accent)]/50 transition-colors text-sm font-medium mt-2"
+          >
+            + Add Location
           </button>
         </div>
 
-        <div className="section">
-          <h4>Availability Window</h4>
-          <label>
-            Start Date & Time:
+        <div className="bg-[var(--card)] border border-[var(--border)] rounded-lg p-4 mb-4">
+          <h4 className="text-[var(--muted)] text-xs uppercase tracking-wide m-0 mb-3 font-medium">
+            Availability Window
+          </h4>
+          <label className="block mb-3 text-xs text-[var(--muted)]">
+            Start Date & Time
             <input
               type="datetime-local"
               value={availabilityStart}
               onChange={(e) => setAvailabilityStart(e.target.value)}
+              className="w-full px-3 py-2 border border-[var(--border)] rounded bg-[#0c1328] text-[var(--text)] text-sm transition-colors duration-150 focus:outline-none focus:ring-2 focus:ring-[var(--accent)] mt-1"
             />
           </label>
-          <label>
-            End Date & Time:
+          <label className="block mb-3 text-xs text-[var(--muted)]">
+            End Date & Time
             <input
               type="datetime-local"
               value={availabilityEnd}
               onChange={(e) => setAvailabilityEnd(e.target.value)}
+              className="w-full px-3 py-2 border border-[var(--border)] rounded bg-[#0c1328] text-[var(--text)] text-sm transition-colors duration-150 focus:outline-none focus:ring-2 focus:ring-[var(--accent)] mt-1"
             />
           </label>
         </div>
 
-        <div className="section">
-          <h4>Event Duration</h4>
-          <div className="durationInputs">
-            <label>
-              Days:
+        <div className="bg-[var(--card)] border border-[var(--border)] rounded-lg p-4 mb-4">
+          <h4 className="text-[var(--muted)] text-xs uppercase tracking-wide m-0 mb-3 font-medium">
+            Event Duration
+          </h4>
+          <div className="flex gap-3">
+            <label className="block flex-1 text-xs text-[var(--muted)]">
+              Days
               <input
                 type="number"
                 value={eventDurationDays}
@@ -1152,10 +1172,11 @@ function App() {
                 onChange={(e) =>
                   setEventDurationDays(parseInt(e.target.value) || 0)
                 }
+                className="w-full px-3 py-2 border border-[var(--border)] rounded bg-[#0c1328] text-[var(--text)] text-sm transition-colors duration-150 focus:outline-none focus:ring-2 focus:ring-[var(--accent)] mt-1"
               />
             </label>
-            <label>
-              Hours:
+            <label className="block flex-1 text-xs text-[var(--muted)]">
+              Hours
               <input
                 type="number"
                 value={eventDurationHours}
@@ -1164,59 +1185,55 @@ function App() {
                 onChange={(e) =>
                   setEventDurationHours(parseInt(e.target.value) || 0)
                 }
+                className="w-full px-3 py-2 border border-[var(--border)] rounded bg-[#0c1328] text-[var(--text)] text-sm transition-colors duration-150 focus:outline-none focus:ring-2 focus:ring-[var(--accent)] mt-1"
               />
             </label>
           </div>
         </div>
 
-        <div className="section">
-          <h4>Import Meeting JSON</h4>
+        <div className="bg-[var(--card)] border border-[var(--border)] rounded-lg p-4 mb-4">
+          <h4 className="text-[var(--muted)] text-xs uppercase tracking-wide m-0 mb-3 font-medium">
+            Import JSON
+          </h4>
           <input
             type="file"
             accept=".json"
             onChange={handleFileUpload}
-            style={{
-              width: "100%",
-              padding: "10px 12px",
-              border: "1px solid var(--border)",
-              borderRadius: "12px",
-              background: "#0c1328",
-              color: "var(--text)",
-              fontSize: "0.9rem",
-              cursor: "pointer",
-            }}
+            className="w-full px-3 py-2 border border-[var(--border)] rounded bg-[#0c1328] text-[var(--text)] text-sm cursor-pointer text-xs"
           />
-          <p
-            className="small"
-            style={{ marginTop: "8px", textAlign: "center" }}
-          >
+          <p className="text-xs text-[var(--muted)] mt-3 mb-2 text-center">
             Or paste JSON below
           </p>
           <textarea
-            rows="6"
+            rows="5"
             placeholder="Paste JSON here..."
             value={jsonInput}
             onChange={(e) => setJsonInput(e.target.value)}
-            style={{
-              width: "100%",
-              fontFamily: "monospace",
-              marginTop: "10px",
-            }}
+            className="w-full px-3 py-2 border border-[var(--border)] rounded bg-[#0c1328] text-[var(--text)] text-xs font-mono resize-y transition-colors duration-150 focus:outline-none focus:ring-2 focus:ring-[var(--accent)]"
           ></textarea>
-          <button onClick={handleLoadJSON} style={{ marginTop: "10px" }}>
+          <button
+            onClick={handleLoadJSON}
+            className="w-full py-2 px-4 bg-[var(--accent)]/10 border border-[var(--accent)]/30 text-[var(--accent)] rounded hover:bg-[var(--accent)]/20 hover:border-[var(--accent)]/50 transition-colors text-sm font-medium mt-3"
+          >
             Load JSON
           </button>
         </div>
 
-        <div className="section">
-          {errorMessage && <div className="errorMessage">{errorMessage}</div>}
+        <div className="bg-[var(--card)] border border-[var(--border)] rounded-lg p-4 mb-4">
+          {errorMessage && (
+            <div className="text-red-400 text-xs my-3 p-3 bg-red-600/10 border border-red-600/30 rounded">
+              {errorMessage}
+            </div>
+          )}
           {successMessage && (
-            <div className="successMessage">{successMessage}</div>
+            <div className="text-emerald-400 text-xs my-3 p-3 bg-emerald-600/10 border border-emerald-600/30 rounded">
+              {successMessage}
+            </div>
           )}
           <button
-            className="submitBtn"
             onClick={handleSubmitMeeting}
             disabled={isLoading}
+            className="w-full py-3 px-4 bg-[var(--accent)] text-white rounded hover:bg-[var(--accent)]/90 transition-colors text-sm font-semibold disabled:opacity-50 disabled:cursor-not-allowed"
           >
             {isLoading ? "Calculating..." : "Plan Meeting"}
           </button>
@@ -1224,45 +1241,53 @@ function App() {
 
         {/* Results Display */}
         {meetingResults && (
-          <div className="section resultsSection">
-            <h3 style={{ marginBottom: "16px" }}>Meeting Plan Results</h3>
+          <div className="bg-[var(--card)] border border-[var(--border)] rounded-lg p-4 mb-4 mt-6">
+            <h3 className="mb-5 text-[var(--text)] text-base font-semibold">
+              Results
+            </h3>
 
             {/* Event Location */}
-            <div className="resultCard">
-              <h4 className="resultTitle">📍 Event Location</h4>
-              <p className="resultValue">{meetingResults.event_location}</p>
-              <button
-                className="submitBtn"
-                onClick={() => setShowExpandedView(true)}
-                style={{ marginTop: "10px", width: "100%" }}
-              >
-                View Expanded Details →
-              </button>
+            <div className="bg-[var(--panel)] border border-[var(--border)] rounded p-4 mb-4">
+              <div className="flex items-center justify-between mb-3">
+                <h4 className="m-0 text-xs uppercase tracking-wide text-[var(--muted)] font-medium">
+                  Location
+                </h4>
+                <button
+                  className="text-xs px-3 py-1 bg-[var(--accent)]/10 border border-[var(--accent)]/30 text-[var(--accent)] rounded hover:bg-[var(--accent)]/20 transition-colors"
+                  onClick={() => setShowExpandedView(true)}
+                >
+                  View Details →
+                </button>
+              </div>
+              <p className="m-0 text-base font-semibold text-[var(--accent)]">
+                {meetingResults.event_location}
+              </p>
             </div>
 
             {/* Dates */}
-            <div className="resultCard">
-              <h4 className="resultTitle">📅 Event Dates</h4>
-              <div className="dateInfo">
-                <div>
-                  <span className="dateLabel">Start:</span>
-                  <span className="dateValue">
+            <div className="bg-[var(--panel)] border border-[var(--border)] rounded p-4 mb-4">
+              <h4 className="m-0 mb-3 text-xs uppercase tracking-wide text-[var(--muted)] font-medium">
+                Dates
+              </h4>
+              <div className="flex flex-col gap-2 text-xs">
+                <div className="flex justify-between">
+                  <span className="text-[var(--muted)]">Start:</span>
+                  <span className="text-[var(--text)]">
                     {new Date(
                       meetingResults.event_dates.start
                     ).toLocaleString()}
                   </span>
                 </div>
-                <div>
-                  <span className="dateLabel">End:</span>
-                  <span className="dateValue">
+                <div className="flex justify-between">
+                  <span className="text-[var(--muted)]">End:</span>
+                  <span className="text-[var(--text)]">
                     {new Date(meetingResults.event_dates.end).toLocaleString()}
                   </span>
                 </div>
-              </div>
-              <div className="dateInfo" style={{ marginTop: "8px" }}>
+                <hr className="border-none border-t border-[var(--border)] my-1" />
                 <div>
-                  <span className="dateLabel">Event Span:</span>
-                  <span className="dateValue">
+                  <span className="text-[var(--muted)]">Event Span: </span>
+                  <span className="text-[var(--text)]">
                     {new Date(meetingResults.event_span.start).toLocaleString()}{" "}
                     → {new Date(meetingResults.event_span.end).toLocaleString()}
                   </span>
@@ -1271,53 +1296,66 @@ function App() {
             </div>
 
             {/* CO2 Emissions */}
-            <div className="resultCard">
-              <h4 className="resultTitle">🌍 Total CO₂ Emissions</h4>
-              <p className="resultValue co2Value">
+            <div className="bg-[var(--panel)] border border-[var(--border)] rounded p-4 mb-4">
+              <h4 className="m-0 mb-3 text-xs uppercase tracking-wide text-[var(--muted)] font-medium">
+                Emissions
+              </h4>
+              <p className="m-0 text-lg font-semibold text-amber-400">
                 {meetingResults.total_co2} kg CO₂
               </p>
             </div>
 
             {/* Travel Hours Statistics */}
-            <div className="resultCard">
-              <h4 className="resultTitle">✈️ Travel Time Statistics</h4>
-              <div className="statsGrid">
-                <div className="statItem">
-                  <span className="statLabel">Average:</span>
-                  <span className="statValue">
-                    {meetingResults.average_travel_hours} hrs
+            <div className="bg-[var(--panel)] border border-[var(--border)] rounded p-4 mb-4">
+              <h4 className="m-0 mb-3 text-xs uppercase tracking-wide text-[var(--muted)] font-medium">
+                Travel Stats
+              </h4>
+              <div className="grid grid-cols-2 gap-2">
+                <div className="flex justify-between items-center p-2 bg-[var(--accent)]/5 rounded">
+                  <span className="text-xs text-[var(--muted)]">Avg:</span>
+                  <span className="text-xs font-semibold text-[var(--accent)]">
+                    {meetingResults.average_travel_hours}h
                   </span>
                 </div>
-                <div className="statItem">
-                  <span className="statLabel">Median:</span>
-                  <span className="statValue">
-                    {meetingResults.median_travel_hours} hrs
+                <div className="flex justify-between items-center p-2 bg-[var(--accent)]/5 rounded">
+                  <span className="text-xs text-[var(--muted)]">Median:</span>
+                  <span className="text-xs font-semibold text-[var(--accent)]">
+                    {meetingResults.median_travel_hours}h
                   </span>
                 </div>
-                <div className="statItem">
-                  <span className="statLabel">Min:</span>
-                  <span className="statValue">
-                    {meetingResults.min_travel_hours} hrs
+                <div className="flex justify-between items-center p-2 bg-[var(--accent)]/5 rounded">
+                  <span className="text-xs text-[var(--muted)]">Min:</span>
+                  <span className="text-xs font-semibold text-[var(--accent)]">
+                    {meetingResults.min_travel_hours}h
                   </span>
                 </div>
-                <div className="statItem">
-                  <span className="statLabel">Max:</span>
-                  <span className="statValue">
-                    {meetingResults.max_travel_hours} hrs
+                <div className="flex justify-between items-center p-2 bg-[var(--accent)]/5 rounded">
+                  <span className="text-xs text-[var(--muted)]">Max:</span>
+                  <span className="text-xs font-semibold text-[var(--accent)]">
+                    {meetingResults.max_travel_hours}h
                   </span>
                 </div>
               </div>
             </div>
 
             {/* Per-City Travel Hours */}
-            <div className="resultCard">
-              <h4 className="resultTitle">🛫 Travel Hours by City</h4>
-              <div className="cityTravelList">
+            <div className="bg-[var(--panel)] border border-[var(--border)] rounded p-4">
+              <h4 className="m-0 mb-3 text-xs uppercase tracking-wide text-[var(--muted)] font-medium">
+                By Location
+              </h4>
+              <div className="flex flex-col gap-2">
                 {Object.entries(meetingResults.attendee_travel_hours).map(
                   ([city, hours]) => (
-                    <div key={city} className="cityTravelItem">
-                      <span className="cityName">{city}:</span>
-                      <span className="cityHours">{hours} hrs</span>
+                    <div
+                      key={city}
+                      className="flex justify-between items-center px-3 py-2 bg-[var(--accent)]/5 rounded"
+                    >
+                      <span className="text-xs text-[var(--text)] font-medium">
+                        {city}
+                      </span>
+                      <span className="text-xs font-semibold text-[var(--accent)]">
+                        {hours}h
+                      </span>
                     </div>
                   )
                 )}
@@ -1326,22 +1364,31 @@ function App() {
           </div>
         )}
 
-        <div className="section">
-          <button className="clearBtn" onClick={handleClearPaths}>
+        <div className="bg-[var(--card)] border border-[var(--border)] rounded-lg p-4">
+          <button
+            onClick={handleClearPaths}
+            className="w-full py-2 px-4 border border-red-600/30 bg-red-600/10 text-red-400 rounded hover:bg-red-600/20 hover:border-red-600/50 transition-colors text-sm font-medium"
+          >
             Clear Visualisation
           </button>
-          <button className="resetBtn" onClick={handleResetView}>
+          <button
+            onClick={handleResetView}
+            className="w-full py-2 px-4 mt-3 border border-[var(--border)] bg-transparent text-[var(--text)] rounded hover:bg-[var(--panel)] transition-colors text-sm font-medium"
+          >
             Reset View
           </button>
         </div>
       </div>
 
-      <div ref={cesiumContainerRef} className="cesiumContainer" />
+      <div
+        ref={cesiumContainerRef}
+        className="w-full h-screen m-0 p-0 relative"
+      />
 
       {/* Hover card for office markers - positioned fixed to viewport */}
       {hoveredOffice && (
         <div
-          className="officeHoverCard"
+          className="absolute max-w-[300px]"
           style={{
             position: "fixed",
             left: `${hoverCardPosition.x}px`,
@@ -1351,9 +1398,13 @@ function App() {
             zIndex: 1000,
           }}
         >
-          <div className="officeHoverCardContent">
-            <h4 className="officeHoverCardTitle">{hoveredOffice.city}</h4>
-            <p className="officeHoverCardAddress">{hoveredOffice.address}</p>
+          <div className="bg-[var(--card)] border border-[var(--border)] rounded-lg px-4 py-3 shadow-lg backdrop-blur-md">
+            <h4 className="m-0 mb-2 text-sm font-semibold text-[var(--text)]">
+              {hoveredOffice.city}
+            </h4>
+            <p className="m-0 text-xs text-[var(--muted)] leading-relaxed">
+              {hoveredOffice.address}
+            </p>
           </div>
         </div>
       )}
