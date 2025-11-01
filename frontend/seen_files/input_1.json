@@ -1,0 +1,15 @@
+{
+	"_comment": "Easy seen test file",
+	"attendees": {
+		"London": 2,
+		"Paris": 3
+	},
+	"availability_window": {
+		"start": "2025-10-06T09:00:00Z",
+		"end": "2025-10-07T17:00:00Z"
+	},
+	"event_duration": {
+		"days": 0,
+		"hours": 2
+	}
+}

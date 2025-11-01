@@ -1,0 +1,17 @@
+{
+	"_comment": "Medium seen test file",
+	"attendees": {
+		"London": 4,
+		"Paris": 10,
+		"Zurich": 7,
+		"Geneva": 1
+	},
+	"availability_window": {
+		"start": "2025-08-04T12:30:00Z",
+		"end": "2025-08-08T12:00:00Z"
+	},
+	"event_duration": {
+		"days": 1,
+		"hours": 2
+	}
+}

@@ -1,0 +1,17 @@
+{
+	"attendees": {
+		"Mumbai": 2,
+		"Shanghai": 3,
+		"Hong Kong": 1,
+		"Singapore": 2,
+		"Sydney": 2
+	},
+	"availability_window": {
+		"start": "2025-12-10T09:00:00Z",
+		"end": "2025-12-15T17:00:00Z"
+	},
+	"event_duration": {
+		"days": 0,
+		"hours": 4
+	}
+}
