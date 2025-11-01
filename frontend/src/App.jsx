@@ -358,7 +358,7 @@ function App() {
     // Build attendees object
     const attendees = {};
     cities.forEach((cityData) => {
-      if (cityData.city.trim()) {
+      if (cityData.city && cityData.city.trim()) {
         const cityName = cityData.city.trim();
         const count = parseInt(cityData.attendees) || 0;
         if (count > 0) {
@@ -432,42 +432,142 @@ function App() {
     // }
   };
 
-  const handleLoadJSON = () => {
-  try {
-    const data = JSON.parse(jsonInput);
+  // Handle JSON file upload
+  const handleFileUpload = (event) => {
+    const file = event.target.files[0];
+    if (!file) return;
 
-    // Load attendees into the cities state
-    if (data.attendees) {
-      const newCities = Object.entries(data.attendees).map(([city, count]) => ({
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      try {
+        const jsonData = JSON.parse(e.target.result);
+        validateAndLoadJsonData(jsonData);
+      } catch (error) {
+        showError("Invalid JSON file: " + error.message);
+      }
+    };
+    reader.readAsText(file);
+
+    // Reset the input so the same file can be uploaded again
+    event.target.value = "";
+  };
+
+  // Validate and load JSON data into the form
+  const validateAndLoadJsonData = (data) => {
+    try {
+      // Validate structure
+      if (!data.attendees || typeof data.attendees !== "object") {
+        showError("Invalid JSON: 'attendees' must be an object");
+        return;
+      }
+
+      if (
+        !data.availability_window ||
+        !data.availability_window.start ||
+        !data.availability_window.end
+      ) {
+        showError(
+          "Invalid JSON: 'availability_window' must have 'start' and 'end'"
+        );
+        return;
+      }
+
+      if (
+        !data.event_duration ||
+        typeof data.event_duration.days === "undefined" ||
+        typeof data.event_duration.hours === "undefined"
+      ) {
+        showError(
+          "Invalid JSON: 'event_duration' must have 'days' and 'hours'"
+        );
+        return;
+      }
+
+      // Load attendees into cities state
+      const cityEntries = Object.entries(data.attendees);
+      if (cityEntries.length === 0) {
+        showError("No attendees found in JSON file");
+        return;
+      }
+
+      const newCities = cityEntries.map(([city, attendees]) => ({
         id: Date.now() + Math.random(),
         city: city,
-        attendees: count,
+        attendees: parseInt(attendees) || 0,
       }));
+
       setCities(newCities);
+
+      // Load availability window (convert from ISO to datetime-local format)
+      const startDate = new Date(data.availability_window.start);
+      const endDate = new Date(data.availability_window.end);
+
+      if (isNaN(startDate.getTime()) || isNaN(endDate.getTime())) {
+        showError("Invalid date format in availability_window");
+        return;
+      }
+
+      // Convert to local datetime format for datetime-local inputs
+      // Note: datetime-local expects local time, not UTC
+      const formatForInput = (date) => {
+        const year = date.getFullYear();
+        const month = String(date.getMonth() + 1).padStart(2, "0");
+        const day = String(date.getDate()).padStart(2, "0");
+        const hours = String(date.getHours()).padStart(2, "0");
+        const minutes = String(date.getMinutes()).padStart(2, "0");
+        return `${year}-${month}-${day}T${hours}:${minutes}`;
+      };
+
+      setAvailabilityStart(formatForInput(startDate));
+      setAvailabilityEnd(formatForInput(endDate));
+
+      // Load event duration
+      setEventDurationDays(parseInt(data.event_duration.days) || 0);
+      setEventDurationHours(parseInt(data.event_duration.hours) || 0);
+
+      showSuccess("JSON file loaded successfully!");
+    } catch (error) {
+      showError("Error loading JSON data: " + error.message);
     }
+  };
 
-    // Load availability dates (convert ISO string to datetime-local format)
-    if (data.availability_window) {
-      if (data.availability_window.start)
-        setAvailabilityStart(data.availability_window.start.slice(0, 16));
-      if (data.availability_window.end)
-        setAvailabilityEnd(data.availability_window.end.slice(0, 16));
+  const handleLoadJSON = () => {
+    try {
+      const data = JSON.parse(jsonInput);
+
+      // Load attendees into the cities state
+      if (data.attendees) {
+        const newCities = Object.entries(data.attendees).map(
+          ([city, count]) => ({
+            id: Date.now() + Math.random(),
+            city: city,
+            attendees: count,
+          })
+        );
+        setCities(newCities);
+      }
+
+      // Load availability dates (convert ISO string to datetime-local format)
+      if (data.availability_window) {
+        if (data.availability_window.start)
+          setAvailabilityStart(data.availability_window.start.slice(0, 16));
+        if (data.availability_window.end)
+          setAvailabilityEnd(data.availability_window.end.slice(0, 16));
+      }
+
+      // Load event duration
+      if (data.event_duration) {
+        if (data.event_duration.days !== undefined)
+          setEventDurationDays(data.event_duration.days);
+        if (data.event_duration.hours !== undefined)
+          setEventDurationHours(data.event_duration.hours);
+      }
+
+      showSuccess("JSON loaded successfully!");
+    } catch (error) {
+      showError("Invalid JSON. Please check the format.");
     }
-
-    // Load event duration
-    if (data.event_duration) {
-      if (data.event_duration.days !== undefined)
-        setEventDurationDays(data.event_duration.days);
-      if (data.event_duration.hours !== undefined)
-        setEventDurationHours(data.event_duration.hours);
-    }
-
-    showSuccess("JSON loaded successfully!");
-  } catch (error) {
-    showError("Invalid JSON. Please check the format.");
-  }
-};
-
+  };
 
   // Draw Flight Path Handler
   const handleDrawPath = () => {
@@ -768,18 +868,42 @@ function App() {
 
         <div className="section">
           <h4>Import Meeting JSON</h4>
-            <textarea
-              rows="6"
-              placeholder='Paste JSON here...'
-              value={jsonInput}
-              onChange={(e) => setJsonInput(e.target.value)}
-              style={{ width: "100%", fontFamily: "monospace" }}
-            ></textarea>
-            <button onClick={handleLoadJSON} style={{ marginTop: "10px" }}>
-              Load JSON
-            </button>
+          <input
+            type="file"
+            accept=".json"
+            onChange={handleFileUpload}
+            style={{
+              width: "100%",
+              padding: "10px 12px",
+              border: "1px solid var(--border)",
+              borderRadius: "12px",
+              background: "#0c1328",
+              color: "var(--text)",
+              fontSize: "0.9rem",
+              cursor: "pointer",
+            }}
+          />
+          <p
+            className="small"
+            style={{ marginTop: "8px", textAlign: "center" }}
+          >
+            Or paste JSON below
+          </p>
+          <textarea
+            rows="6"
+            placeholder="Paste JSON here..."
+            value={jsonInput}
+            onChange={(e) => setJsonInput(e.target.value)}
+            style={{
+              width: "100%",
+              fontFamily: "monospace",
+              marginTop: "10px",
+            }}
+          ></textarea>
+          <button onClick={handleLoadJSON} style={{ marginTop: "10px" }}>
+            Load JSON
+          </button>
         </div>
-
 
         <div className="section">
           {errorMessage && <div className="errorMessage">{errorMessage}</div>}
