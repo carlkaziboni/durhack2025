@@ -97,6 +97,28 @@ body {
   transition: border-color 0.2s, background 0.2s;
 }
 
+/* Style the textarea like other input fields */
+.controlPanel textarea {
+  width: 100%;
+  padding: 10px 12px;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  background: #0c1328;
+  color: var(--text);
+  font-size: 0.9rem;
+  font-family: monospace;
+  box-sizing: border-box;
+  resize: vertical; /* Allows resizing vertically */
+  transition: border-color 0.2s, background 0.2s;
+}
+
+.controlPanel textarea:focus {
+  outline: none;
+  border-color: var(--accent);
+  background: #0e1532;
+}
+
+
 .controlPanel input:focus {
   outline: none;
   border-color: var(--accent);
