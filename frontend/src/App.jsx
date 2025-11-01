@@ -985,6 +985,13 @@ function App() {
     const travelTimes = Object.entries(results.attendee_travel_hours);
     const baseStartTime = viewerRef.current.clock.currentTime;
 
+    // Find the maximum travel hours to determine total animation duration
+    const maxTravelHours = Math.max(...travelTimes.map(([, hours]) => hours));
+    const totalAnimationDuration = Math.max(
+      5,
+      Math.min(30, maxTravelHours * 0.5)
+    ); // 5-30 seconds
+
     travelTimes.forEach(([cityName, travelHours], index) => {
       const cityOffice = officeLocations.find(
         (office) => office.city === cityName
@@ -1048,11 +1055,13 @@ function App() {
       originCityMarkersRef.current.push(marker);
 
       // Create animated plane for this flight path
-      // Calculate animation duration based on travel hours (scale it down for visualization)
-      const animationDuration = Math.max(5, Math.min(30, travelHours * 0.5)); // 5-30 seconds
+      // All planes arrive at the same time, so calculate when to start each plane
+      // The duration for each plane is proportional to its travel hours
+      const animationDuration =
+        (travelHours / maxTravelHours) * totalAnimationDuration;
 
-      // Stagger plane start times so they don't all start at once
-      const startDelay = index * 2; // 2 seconds between each plane
+      // Calculate start time so plane arrives at the end of totalAnimationDuration
+      const startDelay = totalAnimationDuration - animationDuration;
       const startTime = Cesium.JulianDate.addSeconds(
         baseStartTime,
         startDelay,
@@ -1107,10 +1116,10 @@ function App() {
     });
 
     // Set clock to animation time range
-    const totalDuration = travelTimes.length * 2 + 30; // Time for all planes to complete
+    // All planes now arrive at the same time after totalAnimationDuration
     const clockStopTime = Cesium.JulianDate.addSeconds(
       baseStartTime,
-      totalDuration,
+      totalAnimationDuration,
       new Cesium.JulianDate()
     );
 
