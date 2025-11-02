@@ -1,0 +1,18 @@
+{
+  "_comment": "Quick meeting with key European offices",
+  "attendees": {
+    "London": 5,
+    "Paris": 3,
+    "Zurich": 2,
+    "Geneva": 1,
+    "Budapest": 4
+  },
+  "availability_window": {
+    "start": "2025-09-01T08:00:00Z",
+    "end": "2025-09-05T16:00:00Z"
+  },
+  "event_duration": {
+    "days": 0,
+    "hours": 3
+  }
+}

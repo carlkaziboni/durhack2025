@@ -1206,16 +1206,16 @@ function App() {
     // Start animation
     viewerRef.current.clock.shouldAnimate = true;
 
-    // Center on event location but zoom out to show more of the globe
+    // Center on event location with closer zoom
     // Keep the globe centered on screen while showing the event location
     if (eventLocationEntityRef.current) {
-      // Use a high altitude with top-down view to keep globe centered
+      // Use a closer altitude with top-down view to keep globe centered
       // Similar to reset view but centered on event location
       viewerRef.current.camera.flyTo({
         destination: Cesium.Cartesian3.fromDegrees(
           eventOffice.lon,
           eventOffice.lat,
-          20000000 // High altitude to zoom out (20 million meters)
+          3000000 // Closer altitude to zoom in (3 million meters)
         ),
         orientation: {
           heading: Cesium.Math.toRadians(0),

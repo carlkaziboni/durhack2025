@@ -1,0 +1,25 @@
+{
+  "_comment": "Complex multi-continental meeting with many attendees across multiple timezones",
+  "attendees": {
+    "London": 15,
+    "Paris": 8,
+    "Hong Kong": 22,
+    "Singapore": 18,
+    "Mumbai": 12,
+    "Dubai": 25,
+    "Shanghai": 14,
+    "Zurich": 10,
+    "Sydney": 20,
+    "Budapest": 7,
+    "Aarhus": 5,
+    "Wroclaw": 9
+  },
+  "availability_window": {
+    "start": "2025-07-15T09:00:00Z",
+    "end": "2025-07-25T18:00:00Z"
+  },
+  "event_duration": {
+    "days": 2,
+    "hours": 8
+  }
+}
