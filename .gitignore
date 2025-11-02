@@ -64,3 +64,6 @@ reinforcementlearning/12/30.csv
 reinforcementlearning/12/31.csv
 .DS_Store
 reinforcementlearning/december_2024_merged.csv
+reinforcementlearning/travel-environment/__pycache__/travel_environment_v0.cpython-310.pyc
+reinforcementlearning/travel-environment/env/__pycache__/travel_environment.cpython-310.pyc
+reinforcementlearning/travel-environment/env/__pycache__/travel_environment.cpython-312.pyc
