@@ -1,0 +1,14 @@
+{
+  "_comment": "Single attendee - should choose their own city",
+  "attendees": {
+    "Tokyo": 1
+  },
+  "availability_window": {
+    "start": "2025-06-15T08:00:00Z",
+    "end": "2025-06-15T20:00:00Z"
+  },
+  "event_duration": {
+    "days": 0,
+    "hours": 1
+  }
+}

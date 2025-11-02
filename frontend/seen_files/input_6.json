@@ -1,0 +1,17 @@
+{
+  "_comment": "Asia-Pacific focused - Hong Kong, Singapore, Tokyo, Sydney",
+  "attendees": {
+    "Hong Kong": 8,
+    "Singapore": 12,
+    "Tokyo": 6,
+    "Sydney": 5
+  },
+  "availability_window": {
+    "start": "2025-09-10T01:00:00Z",
+    "end": "2025-09-12T23:59:59Z"
+  },
+  "event_duration": {
+    "days": 2,
+    "hours": 6
+  }
+}

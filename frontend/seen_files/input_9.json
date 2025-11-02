@@ -1,0 +1,22 @@
+{
+	"_comment": "Large global conference - 200+ people across continents",
+	"attendees": {
+		"London": 45,
+		"New York": 38,
+		"Hong Kong": 32,
+		"Singapore": 28,
+		"Sydney": 25,
+		"Tokyo": 22,
+		"Dubai": 18,
+		"Zurich": 15
+	},
+	"availability_window": {
+		"start": "2025-12-01T00:00:00Z",
+		"end": "2025-12-05T23:59:59Z"
+	},
+	"event_duration": {
+		"days": 3,
+		"hours": 8
+	}
+}
+

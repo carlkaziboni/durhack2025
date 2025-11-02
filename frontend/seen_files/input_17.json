@@ -1,0 +1,18 @@
+{
+	"_comment": "Nordic countries - should favor Stockholm or Copenhagen",
+	"attendees": {
+		"Stockholm": 8,
+		"Copenhagen": 6,
+		"Oslo": 5,
+		"Helsinki": 4
+	},
+	"availability_window": {
+		"start": "2025-04-15T08:00:00Z",
+		"end": "2025-04-17T18:00:00Z"
+	},
+	"event_duration": {
+		"days": 1,
+		"hours": 6
+	}
+}
+

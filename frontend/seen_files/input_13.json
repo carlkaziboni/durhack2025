@@ -1,0 +1,18 @@
+{
+	"_comment": "India + Middle East mix",
+	"attendees": {
+		"Mumbai": 20,
+		"Delhi": 15,
+		"Dubai": 12,
+		"Riyadh": 8
+	},
+	"availability_window": {
+		"start": "2025-09-25T06:00:00Z",
+		"end": "2025-09-27T22:00:00Z"
+	},
+	"event_duration": {
+		"days": 2,
+		"hours": 4
+	}
+}
+

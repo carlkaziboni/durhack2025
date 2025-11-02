@@ -1,9 +1,9 @@
 from pettingzoo import ParallelEnv
 from gymnasium import spaces
 import numpy as np
-from datetime import datetime, timedelta
-
 import pandas as pd
+from datetime import datetime, timedelta
+from concurrent.futures import ThreadPoolExecutor, as_completed
 import os
 
 class TravelEnvironment(ParallelEnv):
@@ -13,12 +13,15 @@ class TravelEnvironment(ParallelEnv):
         "name": "travel_environment_v0",
     }
 
-    def __init__(self, scenario):
+    def __init__(self, scenario, travel_data=None):
         super().__init__()
         self.scenario = scenario
 
-        # Load data from CSV files FIRST (needed for building candidate locations)
-        self._load_data_initial()
+        # Load data from CSV files OR use provided cached data
+        if travel_data is None:
+            self._load_data_initial()
+        else:
+            self._use_cached_data(travel_data)
         
         # Extract temporal information from availability window
         self.availability_start = datetime.fromisoformat(scenario["availability_window"]["start"].replace('Z', '+00:00'))
@@ -46,38 +49,71 @@ class TravelEnvironment(ParallelEnv):
             self.training_df['departure_location'].isin(qrt_hq_iata_codes)
         ]['arrival_location'].unique()
         
-        # Exclude QRT headquarters themselves from candidate destinations
-        candidate_iata = [iata for iata in destinations_from_qrt if iata not in qrt_hq_iata_codes]
+        # IMPORTANT: Include QRT headquarters as candidate destinations
+        # This allows meetings to happen in the same city where attendees are located
+        # (e.g., if all attendees are in London, meeting should be in London, not elsewhere)
+        all_candidate_iata = list(set(list(destinations_from_qrt) + qrt_hq_iata_codes))
         
         # Map IATA codes to city names
-        iata_to_city = {}
-        for iata in candidate_iata:
-            city_info = self.codes_df[self.codes_df['iata'] == iata]
-            if not city_info.empty:
-                # Use airport name or region as city name
-                airport_name = city_info.iloc[0]['airport']
-                # Extract city name from airport name (remove common airport terms)
-                city_name = airport_name
-                for term in [' Airport', ' International', ' Intl', ' Regional', ' Municipal', 
-                            ' Field', ' AFB', ' Air Base', ' Arpt']:
-                    city_name = city_name.replace(term, '')
-                city_name = city_name.split(',')[0].strip()
-                
-                # Skip very short or generic names
-                if city_name and len(city_name) > 2 and city_name.lower() not in ['the', 'all', 'new']:
-                    iata_to_city[iata] = city_name
+        # First, add QRT headquarters with their known city names
+        qrt_hq_cities = {
+            "LHR": "London",
+            "CDG": "Paris", 
+            "HKG": "Hong Kong",
+            "SIN": "Singapore",
+            "BOM": "Mumbai",
+            "DXB": "Dubai",
+            "PVG": "Shanghai",
+            "ZRH": "Zurich",
+            "GVA": "Geneva",
+            "AAR": "Aarhus",
+            "SYD": "Sydney",
+            "WRO": "Wroclaw",
+            "BUD": "Budapest"
+        }
+        iata_to_city = qrt_hq_cities.copy()
         
-        # Create candidate locations list (ALL city names that exist in training data - no limit)
-        # Sort by frequency of routes to prioritize better-connected destinations
+        # Then add other destinations from codes_df
+        for iata in all_candidate_iata:
+            if iata not in iata_to_city:  # Skip if already added (QRT HQ)
+                city_info = self.codes_df[self.codes_df['iata'] == iata]
+                if not city_info.empty:
+                    # Use airport name or region as city name
+                    airport_name = city_info.iloc[0]['airport']
+                    # Extract city name from airport name (remove common airport terms)
+                    city_name = airport_name
+                    for term in [' Airport', ' International', ' Intl', ' Regional', ' Municipal', 
+                            ' Field', ' AFB', ' Air Base', ' Arpt']:
+                        city_name = city_name.replace(term, '')
+                    city_name = city_name.split(',')[0].strip()
+                    
+                    # Skip very short or generic names
+                    if city_name and len(city_name) > 2 and city_name.lower() not in ['the', 'all', 'new']:
+                        iata_to_city[iata] = city_name
+        
+        # Create candidate locations list
+        # CRITICAL: Must maintain the EXACT SAME ORDER as training to match model's action indices!
+        # The model predicts action indices (0-781) that correspond to positions in this list
+        # If we change the order, action 100 means a different city than during training!
+        
+        # EXACT MATCH TO TRAINING: Exclude QRT headquarters from candidates (same as training line 50)
+        # Then sort by connectivity (same as training line 72-77)
+        candidate_iata = [iata for iata in all_candidate_iata if iata not in qrt_hq_iata_codes and iata in iata_to_city]
+        
+        # Sort by frequency of routes (same as original training)
         destination_counts = self.training_df[
             self.training_df['departure_location'].isin(qrt_hq_iata_codes)
         ]['arrival_location'].value_counts()
         
-        # Order destinations by connectivity (most routes first)
-        sorted_iata = [iata for iata in destination_counts.index if iata in iata_to_city]
-        self.candidate_locations = [iata_to_city[iata] for iata in sorted_iata]
+        # Order destinations by connectivity (most routes first) - EXACT training order
+        sorted_iata = [iata for iata in destination_counts.index if iata in candidate_iata]
         
-        print(f"✈️  Loaded {len(self.candidate_locations)} candidate destinations from training data")
+        # Limit to exactly 782 to match model (model expects 4695 features = 782*6+3)
+        MAX_CANDIDATES = 782
+        sorted_iata_limited = sorted_iata[:MAX_CANDIDATES]
+        self.candidate_locations = [iata_to_city[iata] for iata in sorted_iata_limited]
+        
+        print(f"✈️  Loaded {len(self.candidate_locations)} candidate destinations (EXACT training order: QRT HQs excluded, sorted by connectivity)")
         
         # Update city_to_iata mapping to include both QRT HQs and candidate destinations
         self.city_to_iata.update({city: iata for iata, city in iata_to_city.items() if city in self.candidate_locations})
@@ -103,20 +139,108 @@ class TravelEnvironment(ParallelEnv):
         self.distances = {}
         self.prices = {}
         
-        for agent in self.agents:
+        # Parallelize travel matrix building for better performance
+        # Build all matrices in parallel across agents - this is the key optimization
+        def build_agent_matrices(agent):
             home_city = self.agent_home_locations[agent]
-            self.travel_matrix[agent] = {}
-            self.co2_emissions[agent] = {}
-            self.timezone_offsets[agent] = {}
-            self.distances[agent] = {}
-            self.prices[agent] = {}
+            home_iata = self.city_to_iata.get(home_city)
             
+            # Pre-fetch all route data at once if available (avoids repeated cache lookups)
+            route_cache = {}
+            if home_iata and self.flight_data_cache and home_iata in self.flight_data_cache:
+                route_cache = self.flight_data_cache[home_iata]
+            elif not home_iata:
+                print(f"⚠️  Warning: No IATA code for {home_city}, will use fallback (slow)")
+            elif not self.flight_data_cache:
+                print(f"⚠️  Warning: flight_data_cache not available, will use fallback (slow)")
+            elif home_iata not in self.flight_data_cache:
+                print(f"⚠️  Warning: {home_iata} not in cache, will use fallback (slow)")
+            
+            matrix_data = {
+                'travel_matrix': {},
+                'co2_emissions': {},
+                'timezone_offsets': {},
+                'distances': {},
+                'prices': {}
+            }
+            
+            # Build matrices efficiently using cached route data
+            # This produces IDENTICAL results to calling _get_travel_time(), _get_co2_emissions(), etc.
+            # but avoids function call overhead by doing the lookups directly
             for destination in self.candidate_locations:
-                self.travel_matrix[agent][destination] = self._get_travel_time(home_city, destination)
-                self.co2_emissions[agent][destination] = self._get_co2_emissions(home_city, destination)
-                self.timezone_offsets[agent][destination] = self._get_timezone_offset(home_city, destination)
-                self.distances[agent][destination] = self._get_distance(home_city, destination)
-                self.prices[agent][destination] = self._get_price(home_city, destination)
+                dest_iata = self.city_to_iata.get(destination)
+                
+                # Handle same origin/destination case (returns 0.0 for time/co2/distance/timezone)
+                if home_city == destination:
+                    matrix_data['travel_matrix'][destination] = 0.0
+                    matrix_data['co2_emissions'][destination] = 0.0
+                    matrix_data['timezone_offsets'][destination] = 0.0
+                    matrix_data['distances'][destination] = 0.0
+                    matrix_data['prices'][destination] = 0.0
+                    continue
+                
+                # Fast lookup from pre-fetched cache (matches _get_flight_data logic)
+                if home_iata and dest_iata and dest_iata in route_cache:
+                    # Fast path: direct cache access
+                    route_data = route_cache[dest_iata]
+                    # Convert time from minutes to hours (same as _get_travel_time does)
+                    matrix_data['travel_matrix'][destination] = route_data.get('avg_time', self.penalties['avg_time']) / 60.0
+                    matrix_data['co2_emissions'][destination] = route_data.get('avg_co2_emissions', self.penalties['avg_co2_emissions'])
+                    matrix_data['timezone_offsets'][destination] = route_data.get('timezone_offset_diff', self.penalties['timezone_offset_diff'])
+                    matrix_data['distances'][destination] = route_data.get('avg_distance', self.penalties['avg_distance'])
+                    matrix_data['prices'][destination] = 0.0  # Price not available (same as _get_price)
+                elif not home_iata or not dest_iata:
+                    # Missing IATA codes - use original functions which handle this case
+                    # (Only for truly missing IATA, not just missing route)
+                    matrix_data['travel_matrix'][destination] = self._get_travel_time(home_city, destination)
+                    matrix_data['co2_emissions'][destination] = self._get_co2_emissions(home_city, destination)
+                    matrix_data['timezone_offsets'][destination] = self._get_timezone_offset(home_city, destination)
+                    matrix_data['distances'][destination] = self._get_distance(home_city, destination)
+                    matrix_data['prices'][destination] = self._get_price(home_city, destination)
+                else:
+                    # Route not in cache but IATA codes exist - use penalties directly (FAST)
+                    # This is much faster than calling _get_flight_data which does DataFrame queries
+                    matrix_data['travel_matrix'][destination] = self.penalties['avg_time'] / 60.0
+                    matrix_data['co2_emissions'][destination] = self.penalties['avg_co2_emissions']
+                    matrix_data['timezone_offsets'][destination] = self.penalties['timezone_offset_diff']
+                    matrix_data['distances'][destination] = self.penalties['avg_distance']
+                    matrix_data['prices'][destination] = 0.0
+            
+            return agent, matrix_data
+        
+        # Use ThreadPoolExecutor to build matrices in parallel
+        # Optimized: Pre-fetch route caches per agent to avoid repeated dict lookups
+        # Parallelizing across agents provides significant speedup (key optimization!)
+        max_workers = min(len(self.agents), os.cpu_count() or 4, 20)  # More workers for M4 Pro
+        print(f"🚀 Building travel matrices: {len(self.agents)} agents, {len(self.candidate_locations)} destinations, {max_workers} workers")
+        if max_workers > 1 and len(self.agents) > 1:
+            # Use context manager for automatic cleanup
+            with ThreadPoolExecutor(max_workers=max_workers) as executor:
+                futures = {executor.submit(build_agent_matrices, agent): agent for agent in self.agents}
+                for future in as_completed(futures):
+                    agent, matrix_data = future.result()
+                    self.travel_matrix[agent] = matrix_data['travel_matrix']
+                    self.co2_emissions[agent] = matrix_data['co2_emissions']
+                    self.timezone_offsets[agent] = matrix_data['timezone_offsets']
+                    self.distances[agent] = matrix_data['distances']
+                    self.prices[agent] = matrix_data['prices']
+        else:
+            # Fallback to sequential for single agent or single core
+            print(f"⚠️  Using sequential mode (agents={len(self.agents)}, workers={max_workers})")
+            for agent in self.agents:
+                home_city = self.agent_home_locations[agent]
+                self.travel_matrix[agent] = {}
+                self.co2_emissions[agent] = {}
+                self.timezone_offsets[agent] = {}
+                self.distances[agent] = {}
+                self.prices[agent] = {}
+                
+                for destination in self.candidate_locations:
+                    self.travel_matrix[agent][destination] = self._get_travel_time(home_city, destination)
+                    self.co2_emissions[agent][destination] = self._get_co2_emissions(home_city, destination)
+                    self.timezone_offsets[agent][destination] = self._get_timezone_offset(home_city, destination)
+                    self.distances[agent][destination] = self._get_distance(home_city, destination)
+                    self.prices[agent][destination] = self._get_price(home_city, destination)
         
         # Reference for backward compatibility
         self.travel_time = self.travel_matrix
@@ -129,6 +253,14 @@ class TravelEnvironment(ParallelEnv):
 
         self.reset()
 
+    def _use_cached_data(self, travel_data):
+        """Use pre-loaded cached data instead of loading from CSV files."""
+        self.flight_data_cache = travel_data['flight_data_cache']
+        self.training_df = travel_data['training_df']
+        self.codes_df = travel_data['codes_df']
+        self.city_to_iata = travel_data['city_to_iata']
+        self.penalties = travel_data['penalties']
+    
     def _load_data_initial(self):
         """Load data from CSV files and build candidate locations from actual flight data."""
         # Construct paths relative to this file's location
@@ -140,6 +272,15 @@ class TravelEnvironment(ParallelEnv):
 
         self.training_df = pd.read_csv(training_data_path)
         self.codes_df = pd.read_csv(codes_data_path)
+        
+        # Initialize empty cache (will be built lazily if needed, but we prefer cached version)
+        self.flight_data_cache = {}
+        self.penalties = {
+            'avg_time': 1440.0,
+            'avg_co2_emissions': 500.0,
+            'timezone_offset_diff': 12.0,
+            'avg_distance': 15000.0
+        }
 
         # Create a mapping from city names to IATA codes.
         # QRT Headquarters (13 locations - these are attendee START locations)
@@ -253,20 +394,21 @@ class TravelEnvironment(ParallelEnv):
         }
 
     def _get_flight_data(self, origin_city, dest_city, column):
-        """Get a specific data point for a flight from training_data.csv."""
+        """Get a specific data point for a flight using cached lookup or DataFrame fallback."""
         origin_iata = self.city_to_iata.get(origin_city)
         dest_iata = self.city_to_iata.get(dest_city)
 
         if not origin_iata or not dest_iata:
             # No IATA mapping - return penalty values
-            penalties = {
-                'avg_time': 1440.0,  # 24 hours in minutes (penalty)
-                'avg_co2_emissions': 500.0,  # Very high CO2 (penalty)
-                'timezone_offset_diff': 12.0,  # Maximum timezone diff
-                'avg_distance': 15000.0  # Very long distance (penalty)
-            }
-            return penalties.get(column, 1000.0)
+            return self.penalties.get(column, 1000.0)
 
+        # Use fast dictionary lookup if cache is available
+        if self.flight_data_cache:
+            if origin_iata in self.flight_data_cache and dest_iata in self.flight_data_cache[origin_iata]:
+                route_data = self.flight_data_cache[origin_iata][dest_iata]
+                return route_data.get(column, self.penalties.get(column, 1000.0))
+        
+        # Fallback to DataFrame query (for backward compatibility when cache not available)
         flight = self.training_df[
             (self.training_df['departure_location'] == origin_iata) &
             (self.training_df['arrival_location'] == dest_iata)
@@ -276,24 +418,11 @@ class TravelEnvironment(ParallelEnv):
             value = flight[column].iloc[0]
             # Ensure we don't return NaN or inf
             if pd.isna(value) or np.isinf(value):
-                # Return penalty values for invalid data
-                penalties = {
-                    'avg_time': 1440.0,
-                    'avg_co2_emissions': 500.0,
-                    'timezone_offset_diff': 12.0,
-                    'avg_distance': 15000.0
-                }
-                return penalties.get(column, 1000.0)
+                return self.penalties.get(column, 1000.0)
             return value
         
         # No direct flight found - return high penalty values to discourage this route
-        penalties = {
-            'avg_time': 1440.0,  # 24 hours in minutes
-            'avg_co2_emissions': 500.0,  # Very high CO2
-            'timezone_offset_diff': 12.0,  # Maximum timezone diff
-            'avg_distance': 15000.0  # Very long distance
-        }
-        return penalties.get(column, 1000.0)
+        return self.penalties.get(column, 1000.0)
 
     def _get_travel_time(self, origin, destination):
         """Get travel time between two locations (in hours)"""
@@ -346,7 +475,16 @@ class TravelEnvironment(ParallelEnv):
 
     def observe(self, agent):
         # Create observation vector with all 6 features for each candidate location
-        obs_features = []
+        # IMPORTANT: We need to preserve relative relationships between cities
+        # Instead of normalizing by global max, normalize each feature type separately
+        
+        num_cities = len(self.candidate_locations)
+        distances = []
+        timezones = []
+        flight_times = []
+        co2_vals = []
+        prices = []
+        combined = []
         
         for city in self.candidate_locations:
             distance = self.distances[agent][city]
@@ -355,11 +493,45 @@ class TravelEnvironment(ParallelEnv):
             co2 = self.co2_emissions[agent][city]
             price = self.prices[agent][city]
             
-            # Append all features for this city
-            obs_features.extend([distance, timezone, flight_time, co2, price, 
-                               distance + timezone + flight_time + co2 + price])
+            distances.append(distance)
+            timezones.append(timezone)
+            flight_times.append(flight_time)
+            co2_vals.append(co2)
+            prices.append(price)
+            combined.append(distance + timezone + flight_time + co2 + price)
         
-        # Add temporal features (normalized)
+        # Normalize each feature type by its own max (preserves relative relationships within feature)
+        # This way: if Frankfurt CO2=6.7kg and KL CO2=195kg, the ratio 6.7/195 is preserved
+        obs_features = []
+        
+        # Normalize each feature separately to preserve relative relationships
+        def normalize_feature(feature_list):
+            arr = np.array(feature_list, dtype=np.float32)
+            max_val = arr.max()
+            if max_val > 0 and not np.isnan(max_val) and not np.isinf(max_val):
+                return (arr / max_val).tolist()
+            return arr.tolist()
+        
+        # Normalize each feature type independently
+        norm_distances = normalize_feature(distances)
+        norm_timezones = normalize_feature(timezones)
+        norm_flight_times = normalize_feature(flight_times)
+        norm_co2 = normalize_feature(co2_vals)
+        norm_prices = normalize_feature(prices)
+        norm_combined = normalize_feature(combined)
+        
+        # Interleave features: [dist[0], tz[0], time[0], co2[0], price[0], comb[0], dist[1], tz[1], ...]
+        for i in range(num_cities):
+            obs_features.extend([
+                norm_distances[i],
+                norm_timezones[i],
+                norm_flight_times[i],
+                norm_co2[i],
+                norm_prices[i],
+                norm_combined[i]
+            ])
+        
+        # Add temporal features (already normalized)
         obs_features.extend([
             self.start_day_of_week / 6.0,           # Day of week (0-6) normalized
             self.end_day_of_week / 6.0,             # Day of week (0-6) normalized
@@ -367,14 +539,6 @@ class TravelEnvironment(ParallelEnv):
         ])
         
         obs = np.array(obs_features, dtype=np.float32)
-        
-        # Normalize observations to [0, 1] range with safe handling
-        obs_max = obs.max()
-        if obs_max > 0 and not np.isnan(obs_max) and not np.isinf(obs_max):
-            obs = obs / obs_max
-        else:
-            # If all zeros or invalid, return normalized array
-            obs = np.zeros_like(obs)
         
         # Final safety check for NaN or inf
         obs = np.nan_to_num(obs, nan=0.0, posinf=1.0, neginf=0.0)

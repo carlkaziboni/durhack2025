@@ -8,7 +8,6 @@ import { getLatLonFromCity, getWeatherForDate } from "./utils/weatherService";
 import { generateMeetingEmail } from "./utils/generateEmail";
 import { getCitySummary, getCountryInfo } from "./utils/cityInfoService";
 
-
 // Set your Cesium Ion access token (optional)
 // You can get a free token at https://cesium.com/ion/
 // If you have a valid token, uncomment and replace with your actual token
@@ -103,9 +102,6 @@ const officeLocations = [
       "H2Offices building, 2nd floor, Váci út 23-27., Budapest 1134, Hungary",
   },
 ];
-
-
-
 
 // Mock backend function - generates realistic response based on input
 const mockBackend = (meetingData) => {
@@ -268,6 +264,7 @@ function App() {
   const [showJsonModal, setShowJsonModal] = useState(false);
   const [jsonModalTab, setJsonModalTab] = useState("paste");
   const [jsonModalText, setJsonModalText] = useState("");
+  const [responseDuration, setResponseDuration] = useState(null);
 
   // Hover card state
   const [hoveredOffice, setHoveredOffice] = useState(null);
@@ -279,33 +276,30 @@ function App() {
   const [cityBriefing, setCityBriefing] = useState(null);
 
   useEffect(() => {
-  async function fetchBriefing() {
-    if (!meetingResults) return;
-    const summary = await getCitySummary(meetingResults.event_location);
-    const country = await getCountryInfo(meetingResults.event_location);
-    setCityBriefing({ summary, country });
-  }
-  fetchBriefing();
-}, [meetingResults]);
+    async function fetchBriefing() {
+      if (!meetingResults) return;
+      const summary = await getCitySummary(meetingResults.event_location);
+      const country = await getCountryInfo(meetingResults.event_location);
+      setCityBriefing({ summary, country });
+    }
+    fetchBriefing();
+  }, [meetingResults]);
 
-    const handleGenerateEmail = () => {
-  if (!meetingResults) {
-    alert("❗ No meeting data to generate email.");
-    return;
-  }
+  const handleGenerateEmail = () => {
+    if (!meetingResults) {
+      alert("❗ No meeting data to generate email.");
+      return;
+    }
 
-  const html = generateMeetingEmail(meetingResults, weather, cityBriefing);
+    const html = generateMeetingEmail(meetingResults, weather, cityBriefing);
 
-  // mailto supports only plain text, so encode HTML safely
-  const subject = `Meeting Summary – ${meetingResults.event_location}`;
-  const body = encodeURIComponent(html);
+    // mailto supports only plain text, so encode HTML safely
+    const subject = `Meeting Summary – ${meetingResults.event_location}`;
+    const body = encodeURIComponent(html);
 
-  // Open default email client
-  window.location.href = `mailto:?subject=${subject}&body=${body}`;
-};
-
-
-
+    // Open default email client
+    window.location.href = `mailto:?subject=${subject}&body=${body}`;
+  };
 
   const [isLoading, setIsLoading] = useState(false);
   const eventLocationEntityRef = useRef(null);
@@ -808,44 +802,54 @@ function App() {
     setIsLoading(true);
     setErrorMessage("");
     setSuccessMessage("");
+    setResponseDuration(null);
+
+    const startTime = performance.now();
 
     try {
-      // TODO: Replace with actual backend API endpoint
-      // For now, use mock backend
-      const result = await mockBackend(meetingData);
+      // Call the real backend API endpoint
+      const response = await fetch("http://localhost:8000/optimize-event", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(meetingData),
+      });
+
+      const endTime = performance.now();
+      const duration = ((endTime - startTime) / 1000).toFixed(2); // Convert to seconds with 2 decimal places
+      setResponseDuration(duration);
+
+      if (!response.ok) {
+        const errorData = await response
+          .json()
+          .catch(() => ({ detail: response.statusText }));
+        throw new Error(
+          errorData.detail || `HTTP error! status: ${response.status}`
+        );
+      }
+
+      const result = await response.json();
+
+      // Add original meeting data to result for display purposes
+      const resultWithMeetingData = {
+        ...result,
+        meeting_data: meetingData,
+      };
 
       // Store results
-      setMeetingResults(result);
+      setMeetingResults(resultWithMeetingData);
 
       // Visualize results on globe
-      visualizeMeetingResults(result);
+      visualizeMeetingResults(resultWithMeetingData);
 
-      showSuccess("Meeting plan calculated successfully!");
+      showSuccess(`Meeting plan calculated successfully! (${duration}s)`);
     } catch (error) {
       showError("Failed to calculate meeting plan: " + error.message);
       console.error("Error:", error);
     } finally {
       setIsLoading(false);
     }
-
-    // TODO: Replace mock backend with actual API call
-    // try {
-    //   const response = await fetch('YOUR_BACKEND_API_URL', {
-    //     method: 'POST',
-    //     headers: {
-    //       'Content-Type': 'application/json',
-    //     },
-    //     body: JSON.stringify(meetingData),
-    //   });
-    //   const result = await response.json();
-    //   setMeetingResults(result);
-    //   visualizeMeetingResults(result);
-    //   showSuccess("Meeting plan calculated successfully!");
-    // } catch (error) {
-    //   showError("Failed to calculate meeting plan: " + error.message);
-    // } finally {
-    //   setIsLoading(false);
-    // }
   };
 
   // Handle JSON file upload
@@ -1019,20 +1023,27 @@ function App() {
     });
     originCityMarkersRef.current = [];
 
-    // Find event location coordinates
-    const eventOffice = officeLocations.find(
-      (office) => office.city === results.event_location
-    );
-    if (!eventOffice) return;
+    // Get event location coordinates from API response
+    const eventLat = results.event_location_coordinates?.latitude;
+    const eventLon = results.event_location_coordinates?.longitude;
+
+    // Fallback to office locations lookup if coordinates not provided
+    let eventLatFinal = eventLat;
+    let eventLonFinal = eventLon;
+
+    if (!eventLatFinal || !eventLonFinal) {
+      const eventOffice = officeLocations.find(
+        (office) => office.city === results.event_location
+      );
+      if (!eventOffice) return;
+      eventLatFinal = eventOffice.lat;
+      eventLonFinal = eventOffice.lon;
+    }
 
     // Add event location marker (green/star marker)
     eventLocationEntityRef.current = viewerRef.current.entities.add({
       name: `Event Location: ${results.event_location}`,
-      position: Cesium.Cartesian3.fromDegrees(
-        eventOffice.lon,
-        eventOffice.lat,
-        0
-      ),
+      position: Cesium.Cartesian3.fromDegrees(eventLonFinal, eventLatFinal, 0),
       point: {
         pixelSize: 24,
         color: Cesium.Color.GOLD,
@@ -1076,8 +1087,8 @@ function App() {
       const positions = createCurvedPath(
         cityOffice.lon,
         cityOffice.lat,
-        eventOffice.lon,
-        eventOffice.lat
+        eventLonFinal,
+        eventLatFinal
       );
 
       // Add flight path (subtle colors based on travel hours)
@@ -1213,8 +1224,8 @@ function App() {
       // Similar to reset view but centered on event location
       viewerRef.current.camera.flyTo({
         destination: Cesium.Cartesian3.fromDegrees(
-          eventOffice.lon,
-          eventOffice.lat,
+          eventLonFinal,
+          eventLatFinal,
           3000000 // Closer altitude to zoom in (3 million meters)
         ),
         orientation: {
@@ -1276,30 +1287,29 @@ function App() {
     setOfficeMarkersVisibility(true);
   };
 
-
   useEffect(() => {
-  async function fetchCityBriefing() {
-    if (!meetingResults) return;
-    const city = meetingResults.event_location;
+    async function fetchCityBriefing() {
+      if (!meetingResults) return;
+      const city = meetingResults.event_location;
 
-    const citySummary = await getCitySummary(city);
+      const citySummary = await getCitySummary(city);
 
-    // Get country by reversing coordinates OR simple fallback:
-    const coords = await getLatLonFromCity(city);
-    let countryInfo = null;
-    if (coords) {
-      // If you want: use a reverse geocode API. But simplest:
-      countryInfo = await getCountryInfo(city); // works for many city=country names
+      // Get country by reversing coordinates OR simple fallback:
+      const coords = await getLatLonFromCity(city);
+      let countryInfo = null;
+      if (coords) {
+        // If you want: use a reverse geocode API. But simplest:
+        countryInfo = await getCountryInfo(city); // works for many city=country names
+      }
+
+      setCityBriefing({
+        summary: citySummary,
+        country: countryInfo,
+      });
     }
 
-    setCityBriefing({
-      summary: citySummary,
-      country: countryInfo,
-    });
-  }
-
-  fetchCityBriefing();
-}, [meetingResults]);
+    fetchCityBriefing();
+  }, [meetingResults]);
 
   // Export meeting to Calendar (.ics)
   const handleExportCalendar = () => {
@@ -1540,33 +1550,35 @@ function App() {
                 </h2>
 
                 {/* City Overview Panel */}
-{cityBriefing && (
-  <div className="bg-[var(--panel)] border border-[var(--border)] rounded p-4 mt-4">
-    <h4 className="m-0 mb-3 text-xs uppercase tracking-wide text-[var(--muted)] font-medium">
-      City Overview
-    </h4>
-    <p className="text-sm text-[var(--text)]">
-      {cityBriefing.summary}
-    </p>
+                {cityBriefing && (
+                  <div className="bg-[var(--panel)] border border-[var(--border)] rounded p-4 mt-4">
+                    <h4 className="m-0 mb-3 text-xs uppercase tracking-wide text-[var(--muted)] font-medium">
+                      City Overview
+                    </h4>
+                    <p className="text-sm text-[var(--text)]">
+                      {cityBriefing.summary}
+                    </p>
 
-    {cityBriefing.country && (
-      <>
-        <p className="mt-2 text-sm">
-          <strong>Region:</strong> {cityBriefing.country.region}
-        </p>
-        <p className="text-sm">
-          <strong>Languages:</strong> {cityBriefing.country.languages}
-        </p>
-        <p className="text-sm">
-          <strong>Currency:</strong> {cityBriefing.country.currency}
-        </p>
-        <p className="text-sm italic">
-          {cityBriefing.country.visaNote}
-        </p>
-      </>
-    )}
-  </div>
-)}
+                    {cityBriefing.country && (
+                      <>
+                        <p className="mt-2 text-sm">
+                          <strong>Region:</strong> {cityBriefing.country.region}
+                        </p>
+                        <p className="text-sm">
+                          <strong>Languages:</strong>{" "}
+                          {cityBriefing.country.languages}
+                        </p>
+                        <p className="text-sm">
+                          <strong>Currency:</strong>{" "}
+                          {cityBriefing.country.currency}
+                        </p>
+                        <p className="text-sm italic">
+                          {cityBriefing.country.visaNote}
+                        </p>
+                      </>
+                    )}
+                  </div>
+                )}
 
                 {/* Weather details */}
                 {weather && (
@@ -1615,8 +1627,6 @@ function App() {
                     </div>
                   </div>
 
-                  
-
                   <div>
                     <div className="text-xs uppercase tracking-wider text-[var(--muted)] mb-2">
                       Average Travel Time
@@ -1648,7 +1658,6 @@ function App() {
               >
                 ✉️ Generate Email Summary
               </button>
-
 
               <button
                 className="w-full py-3 px-4 border border-[var(--border)] bg-transparent text-[var(--text)] rounded hover:bg-[var(--panel)] transition-colors text-sm font-medium"

@@ -1,0 +1,17 @@
+{
+	"_comment": "Extreme timezone spread - London, New York, Tokyo",
+	"attendees": {
+		"London": 10,
+		"Tokyo": 8,
+		"Sydney": 6
+	},
+	"availability_window": {
+		"start": "2025-06-30T12:00:00Z",
+		"end": "2025-07-02T12:00:00Z"
+	},
+	"event_duration": {
+		"days": 1,
+		"hours": 3
+	}
+}
+

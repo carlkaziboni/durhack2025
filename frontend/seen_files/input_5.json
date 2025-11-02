@@ -1,0 +1,14 @@
+{
+  "_comment": "All same city - should choose that city with 0 travel",
+  "attendees": {
+    "Singapore": 15
+  },
+  "availability_window": {
+    "start": "2025-07-20T10:00:00Z",
+    "end": "2025-07-20T18:00:00Z"
+  },
+  "event_duration": {
+    "days": 0,
+    "hours": 3
+  }
+}

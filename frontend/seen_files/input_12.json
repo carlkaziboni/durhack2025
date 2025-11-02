@@ -1,0 +1,17 @@
+{
+  "_comment": "Eastern Europe focus - should choose regional hub",
+  "attendees": {
+    "Budapest": 15,
+    "Wroclaw": 12,
+    "Prague": 10,
+    "Vienna": 8
+  },
+  "availability_window": {
+    "start": "2025-10-20T09:00:00Z",
+    "end": "2025-10-22T17:00:00Z"
+  },
+  "event_duration": {
+    "days": 1,
+    "hours": 5
+  }
+}

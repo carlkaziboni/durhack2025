@@ -1,0 +1,18 @@
+{
+	"_comment": "Week-long workshop - need central location",
+	"attendees": {
+		"Bangkok": 12,
+		"Kuala Lumpur": 8,
+		"Jakarta": 6,
+		"Manila": 4
+	},
+	"availability_window": {
+		"start": "2025-08-18T08:00:00Z",
+		"end": "2025-08-25T18:00:00Z"
+	},
+	"event_duration": {
+		"days": 5,
+		"hours": 6
+	}
+}
+

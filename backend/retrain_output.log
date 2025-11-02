@@ -1,0 +1,309 @@
+================================================================================
+RETRAINING MODEL WITH FIXED PER-FEATURE NORMALIZATION
+================================================================================
+
+Changes:
+  ✅ Per-feature normalization (preserves relative relationships)
+  ✅ Model can now distinguish 'much better' from 'slightly better'
+  ✅ Should choose European cities for European attendees
+
+📦 Creating environment...
+✈️  Loaded 782 candidate destinations (EXACT training order: QRT HQs excluded, sorted by connectivity)
+🚀 Building travel matrices: 10 agents, 782 destinations, 10 workers
+⚠️  Warning: flight_data_cache not available, will use fallback (slow)
+⚠️  Warning: flight_data_cache not available, will use fallback (slow)
+⚠️  Warning: flight_data_cache not available, will use fallback (slow)
+⚠️  Warning: flight_data_cache not available, will use fallback (slow)
+⚠️  Warning: flight_data_cache not available, will use fallback (slow)
+⚠️  Warning: flight_data_cache not available, will use fallback (slow)
+⚠️  Warning: flight_data_cache not available, will use fallback (slow)
+⚠️  Warning: flight_data_cache not available, will use fallback (slow)
+⚠️  Warning: flight_data_cache not available, will use fallback (slow)
+⚠️  Warning: flight_data_cache not available, will use fallback (slow)
+✈️  Loaded 782 candidate destinations
+📍 QRT Headquarters (start locations): 13 cities
+
+🔄 Converting to vectorized environment...
+🤖 Creating PPO model...
+Using cpu device
+
+================================================================================
+TRAINING MODEL (300,000 timesteps)
+================================================================================
+
+This may take 30-60 minutes depending on your CPU...
+
+Logging to ./ppo_travel_tensorboard_retrained/PPO_1
+------------------------------
+| time/              |       |
+|    fps             | 1272  |
+|    iterations      | 1     |
+|    time_elapsed    | 16    |
+|    total_timesteps | 20480 |
+------------------------------
+-------------------------------------------
+| time/                   |               |
+|    fps                  | 904           |
+|    iterations           | 2             |
+|    time_elapsed         | 45            |
+|    total_timesteps      | 40960         |
+| train/                  |               |
+|    approx_kl            | 1.6646197e-06 |
+|    clip_fraction        | 0             |
+|    clip_range           | 0.2           |
+|    entropy_loss         | -6.66         |
+|    explained_variance   | 0             |
+|    learning_rate        | 0.0003        |
+|    loss                 | -0.0666       |
+|    n_updates            | 10            |
+|    policy_gradient_loss | 0             |
+|    value_loss           | 18.3          |
+-------------------------------------------
+--------------------------------------
+| time/                   |          |
+|    fps                  | 833      |
+|    iterations           | 3        |
+|    time_elapsed         | 73       |
+|    total_timesteps      | 61440    |
+| train/                  |          |
+|    approx_kl            | 0.0      |
+|    clip_fraction        | 0        |
+|    clip_range           | 0.2      |
+|    entropy_loss         | -6.66    |
+|    explained_variance   | 1        |
+|    learning_rate        | 0.0003   |
+|    loss                 | -0.0666  |
+|    n_updates            | 20       |
+|    policy_gradient_loss | 0        |
+|    value_loss           | 0        |
+--------------------------------------
+--------------------------------------
+| time/                   |          |
+|    fps                  | 797      |
+|    iterations           | 4        |
+|    time_elapsed         | 102      |
+|    total_timesteps      | 81920    |
+| train/                  |          |
+|    approx_kl            | 0.0      |
+|    clip_fraction        | 0        |
+|    clip_range           | 0.2      |
+|    entropy_loss         | -6.66    |
+|    explained_variance   | 1        |
+|    learning_rate        | 0.0003   |
+|    loss                 | -0.0666  |
+|    n_updates            | 30       |
+|    policy_gradient_loss | 0        |
+|    value_loss           | 0        |
+--------------------------------------
+--------------------------------------
+| time/                   |          |
+|    fps                  | 776      |
+|    iterations           | 5        |
+|    time_elapsed         | 131      |
+|    total_timesteps      | 102400   |
+| train/                  |          |
+|    approx_kl            | 0.0      |
+|    clip_fraction        | 0        |
+|    clip_range           | 0.2      |
+|    entropy_loss         | -6.66    |
+|    explained_variance   | 1        |
+|    learning_rate        | 0.0003   |
+|    loss                 | -0.0666  |
+|    n_updates            | 40       |
+|    policy_gradient_loss | 0        |
+|    value_loss           | 0        |
+--------------------------------------
+--------------------------------------
+| time/                   |          |
+|    fps                  | 765      |
+|    iterations           | 6        |
+|    time_elapsed         | 160      |
+|    total_timesteps      | 122880   |
+| train/                  |          |
+|    approx_kl            | 0.0      |
+|    clip_fraction        | 0        |
+|    clip_range           | 0.2      |
+|    entropy_loss         | -6.66    |
+|    explained_variance   | 1        |
+|    learning_rate        | 0.0003   |
+|    loss                 | -0.0666  |
+|    n_updates            | 50       |
+|    policy_gradient_loss | 0        |
+|    value_loss           | 0        |
+--------------------------------------
+--------------------------------------
+| time/                   |          |
+|    fps                  | 757      |
+|    iterations           | 7        |
+|    time_elapsed         | 189      |
+|    total_timesteps      | 143360   |
+| train/                  |          |
+|    approx_kl            | 0.0      |
+|    clip_fraction        | 0        |
+|    clip_range           | 0.2      |
+|    entropy_loss         | -6.66    |
+|    explained_variance   | 1        |
+|    learning_rate        | 0.0003   |
+|    loss                 | -0.0666  |
+|    n_updates            | 60       |
+|    policy_gradient_loss | 0        |
+|    value_loss           | 0        |
+--------------------------------------
+--------------------------------------
+| time/                   |          |
+|    fps                  | 753      |
+|    iterations           | 8        |
+|    time_elapsed         | 217      |
+|    total_timesteps      | 163840   |
+| train/                  |          |
+|    approx_kl            | 0.0      |
+|    clip_fraction        | 0        |
+|    clip_range           | 0.2      |
+|    entropy_loss         | -6.66    |
+|    explained_variance   | 1        |
+|    learning_rate        | 0.0003   |
+|    loss                 | -0.0666  |
+|    n_updates            | 70       |
+|    policy_gradient_loss | 0        |
+|    value_loss           | 0        |
+--------------------------------------
+--------------------------------------
+| time/                   |          |
+|    fps                  | 749      |
+|    iterations           | 9        |
+|    time_elapsed         | 245      |
+|    total_timesteps      | 184320   |
+| train/                  |          |
+|    approx_kl            | 0.0      |
+|    clip_fraction        | 0        |
+|    clip_range           | 0.2      |
+|    entropy_loss         | -6.66    |
+|    explained_variance   | 1        |
+|    learning_rate        | 0.0003   |
+|    loss                 | -0.0666  |
+|    n_updates            | 80       |
+|    policy_gradient_loss | 0        |
+|    value_loss           | 0        |
+--------------------------------------
+--------------------------------------
+| time/                   |          |
+|    fps                  | 744      |
+|    iterations           | 10       |
+|    time_elapsed         | 275      |
+|    total_timesteps      | 204800   |
+| train/                  |          |
+|    approx_kl            | 0.0      |
+|    clip_fraction        | 0        |
+|    clip_range           | 0.2      |
+|    entropy_loss         | -6.66    |
+|    explained_variance   | 1        |
+|    learning_rate        | 0.0003   |
+|    loss                 | -0.0666  |
+|    n_updates            | 90       |
+|    policy_gradient_loss | 0        |
+|    value_loss           | 0        |
+--------------------------------------
+--------------------------------------
+| time/                   |          |
+|    fps                  | 742      |
+|    iterations           | 11       |
+|    time_elapsed         | 303      |
+|    total_timesteps      | 225280   |
+| train/                  |          |
+|    approx_kl            | 0.0      |
+|    clip_fraction        | 0        |
+|    clip_range           | 0.2      |
+|    entropy_loss         | -6.66    |
+|    explained_variance   | 1        |
+|    learning_rate        | 0.0003   |
+|    loss                 | -0.0666  |
+|    n_updates            | 100      |
+|    policy_gradient_loss | 0        |
+|    value_loss           | 0        |
+--------------------------------------
+--------------------------------------
+| time/                   |          |
+|    fps                  | 741      |
+|    iterations           | 12       |
+|    time_elapsed         | 331      |
+|    total_timesteps      | 245760   |
+| train/                  |          |
+|    approx_kl            | 0.0      |
+|    clip_fraction        | 0        |
+|    clip_range           | 0.2      |
+|    entropy_loss         | -6.66    |
+|    explained_variance   | 1        |
+|    learning_rate        | 0.0003   |
+|    loss                 | -0.0666  |
+|    n_updates            | 110      |
+|    policy_gradient_loss | 0        |
+|    value_loss           | 0        |
+--------------------------------------
+--------------------------------------
+| time/                   |          |
+|    fps                  | 739      |
+|    iterations           | 13       |
+|    time_elapsed         | 359      |
+|    total_timesteps      | 266240   |
+| train/                  |          |
+|    approx_kl            | 0.0      |
+|    clip_fraction        | 0        |
+|    clip_range           | 0.2      |
+|    entropy_loss         | -6.66    |
+|    explained_variance   | 1        |
+|    learning_rate        | 0.0003   |
+|    loss                 | -0.0666  |
+|    n_updates            | 120      |
+|    policy_gradient_loss | 0        |
+|    value_loss           | 0        |
+--------------------------------------
+--------------------------------------
+| time/                   |          |
+|    fps                  | 737      |
+|    iterations           | 14       |
+|    time_elapsed         | 388      |
+|    total_timesteps      | 286720   |
+| train/                  |          |
+|    approx_kl            | 0.0      |
+|    clip_fraction        | 0        |
+|    clip_range           | 0.2      |
+|    entropy_loss         | -6.66    |
+|    explained_variance   | 1        |
+|    learning_rate        | 0.0003   |
+|    loss                 | -0.0666  |
+|    n_updates            | 130      |
+|    policy_gradient_loss | 0        |
+|    value_loss           | 0        |
+--------------------------------------
+--------------------------------------
+| time/                   |          |
+|    fps                  | 735      |
+|    iterations           | 15       |
+|    time_elapsed         | 417      |
+|    total_timesteps      | 307200   |
+| train/                  |          |
+|    approx_kl            | 0.0      |
+|    clip_fraction        | 0        |
+|    clip_range           | 0.2      |
+|    entropy_loss         | -6.66    |
+|    explained_variance   | 1        |
+|    learning_rate        | 0.0003   |
+|    loss                 | -0.0666  |
+|    n_updates            | 140      |
+|    policy_gradient_loss | 0        |
+|    value_loss           | 0        |
+--------------------------------------
+📦 Backing up old model to trained_ppo_travel_model_expanded_backup.zip...
+
+================================================================================
+✅ Model saved to: /Users/glen/Desktop/durhack2025/backend/trained_ppo_travel_model_expanded.zip
+================================================================================
+
+📝 Next steps:
+   1. Restart the backend server (it will auto-load the new model)
+   2. Test with a request - model should now choose better cities!
+
+🧪 Testing model...
+   Test result: Model chose 'Melbourne' for test scenario
+
+✅ Retraining complete!

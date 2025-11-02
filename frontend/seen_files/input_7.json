@@ -1,0 +1,18 @@
+{
+	"_comment": "Europe + Middle East mix - should favor European hub",
+	"attendees": {
+		"London": 10,
+		"Frankfurt": 8,
+		"Dubai": 5,
+		"Vienna": 7
+	},
+	"availability_window": {
+		"start": "2025-11-05T08:00:00Z",
+		"end": "2025-11-07T20:00:00Z"
+	},
+	"event_duration": {
+		"days": 1,
+		"hours": 4
+	}
+}
+

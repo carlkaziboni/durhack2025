@@ -1,0 +1,17 @@
+{
+	"_comment": "Quick 30-minute standup - same timezone",
+	"attendees": {
+		"London": 5,
+		"Paris": 3,
+		"Dublin": 2
+	},
+	"availability_window": {
+		"start": "2025-04-08T14:00:00Z",
+		"end": "2025-04-08T15:00:00Z"
+	},
+	"event_duration": {
+		"days": 0,
+		"hours": 0
+	}
+}
+

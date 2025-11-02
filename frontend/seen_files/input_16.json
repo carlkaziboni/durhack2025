@@ -1,0 +1,16 @@
+{
+	"_comment": "Small team - 2 people in different cities",
+	"attendees": {
+		"London": 1,
+		"Zurich": 1
+	},
+	"availability_window": {
+		"start": "2025-05-25T10:00:00Z",
+		"end": "2025-05-25T16:00:00Z"
+	},
+	"event_duration": {
+		"days": 0,
+		"hours": 1
+	}
+}
+
