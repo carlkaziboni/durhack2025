@@ -1539,6 +1539,35 @@ function App() {
                   {meetingResults.event_location}
                 </h2>
 
+                {/* City Overview Panel */}
+{cityBriefing && (
+  <div className="bg-[var(--panel)] border border-[var(--border)] rounded p-4 mt-4">
+    <h4 className="m-0 mb-3 text-xs uppercase tracking-wide text-[var(--muted)] font-medium">
+      City Overview
+    </h4>
+    <p className="text-sm text-[var(--text)]">
+      {cityBriefing.summary}
+    </p>
+
+    {cityBriefing.country && (
+      <>
+        <p className="mt-2 text-sm">
+          <strong>Region:</strong> {cityBriefing.country.region}
+        </p>
+        <p className="text-sm">
+          <strong>Languages:</strong> {cityBriefing.country.languages}
+        </p>
+        <p className="text-sm">
+          <strong>Currency:</strong> {cityBriefing.country.currency}
+        </p>
+        <p className="text-sm italic">
+          {cityBriefing.country.visaNote}
+        </p>
+      </>
+    )}
+  </div>
+)}
+
                 {/* Weather details */}
                 {weather && (
                   <div className="mt-4 bg-[var(--panel)] border border-[var(--border)] rounded-lg p-3">
@@ -1586,34 +1615,7 @@ function App() {
                     </div>
                   </div>
 
-                  {/* City Overview Panel */}
-{cityBriefing && (
-  <div className="bg-[var(--panel)] border border-[var(--border)] rounded p-4 mt-4">
-    <h4 className="m-0 mb-3 text-xs uppercase tracking-wide text-[var(--muted)] font-medium">
-      City Overview
-    </h4>
-    <p className="text-sm text-[var(--text)]">
-      {cityBriefing.summary}
-    </p>
-
-    {cityBriefing.country && (
-      <>
-        <p className="mt-2 text-sm">
-          <strong>Region:</strong> {cityBriefing.country.region}
-        </p>
-        <p className="text-sm">
-          <strong>Languages:</strong> {cityBriefing.country.languages}
-        </p>
-        <p className="text-sm">
-          <strong>Currency:</strong> {cityBriefing.country.currency}
-        </p>
-        <p className="text-sm italic">
-          {cityBriefing.country.visaNote}
-        </p>
-      </>
-    )}
-  </div>
-)}
+                  
 
                   <div>
                     <div className="text-xs uppercase tracking-wider text-[var(--muted)] mb-2">
