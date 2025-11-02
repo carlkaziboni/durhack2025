@@ -2,6 +2,8 @@ import { useEffect, useRef, useState } from "react";
 import * as Cesium from "cesium";
 import "./index.css";
 import ExpandedView from "./ExpandedView";
+import { exportToCalendar } from "./utils/exportToCalendar";
+
 
 // Set your Cesium Ion access token (optional)
 // You can get a free token at https://cesium.com/ion/
@@ -1202,6 +1204,13 @@ function App() {
     setOfficeMarkersVisibility(true);
   };
 
+  // Export meeting to Calendar (.ics)
+const handleExportCalendar = () => {
+  exportToCalendar(meetingResults, showSuccess, showError);
+};
+
+
+
   // Reset View Handler - Recenter globe to default view
   const handleResetView = () => {
     if (!viewerRef.current) return;
@@ -1478,6 +1487,8 @@ function App() {
               </div>
             </div>
 
+            
+
             {/* Per-City Travel Hours */}
             <div className="bg-[var(--panel)] border border-[var(--border)] rounded p-4">
               <h4 className="m-0 mb-3 text-xs uppercase tracking-wide text-[var(--muted)] font-medium">
@@ -1501,7 +1512,15 @@ function App() {
                 )}
               </div>
             </div>
+            <button
+  onClick={handleExportCalendar}
+  className="w-full py-2 px-4 mt-3 bg-[var(--accent)]/10 border border-[var(--accent)]/30 text-[var(--accent)] rounded hover:bg-[var(--accent)]/20 hover:border-[var(--accent)]/50 transition-colors text-sm font-medium"
+>
+  📅 Export to Calendar (.ics)
+</button>
+
           </div>
+          
         )}
 
         <div className="bg-[var(--card)] border border-[var(--border)] rounded-lg p-4">
