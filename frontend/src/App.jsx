@@ -3,6 +3,8 @@ import * as Cesium from "cesium";
 import "./index.css";
 import ExpandedView from "./ExpandedView";
 import { exportToCalendar } from "./utils/exportToCalendar";
+import { getLatLonFromCity, getWeatherForDate } from "./utils/weatherService";
+
 
 
 // Set your Cesium Ion access token (optional)
@@ -99,6 +101,7 @@ const officeLocations = [
       "H2Offices building, 2nd floor, Váci út 23-27., Budapest 1134, Hungary",
   },
 ];
+
 
 // Mock backend function - generates realistic response based on input
 const mockBackend = (meetingData) => {
@@ -264,6 +267,7 @@ function App() {
 
   // Results state
   const [meetingResults, setMeetingResults] = useState(null);
+  const [weather, setWeather] = useState(null);
   const [isLoading, setIsLoading] = useState(false);
   const eventLocationEntityRef = useRef(null);
   const resultsFlightPathsRef = useRef([]);
@@ -517,6 +521,26 @@ function App() {
 
     return orientationProperty;
   };
+
+  useEffect(() => {
+  async function fetchWeather() {
+    if (!meetingResults) return;
+
+    const coords = await getLatLonFromCity(meetingResults.event_location);
+    if (!coords) return;
+
+    const eventDate = new Date(meetingResults.event_dates.start);
+    const weatherData = await getWeatherForDate(
+      coords.lat,
+      coords.lon,
+      eventDate
+    );
+    setWeather(weatherData);
+  }
+
+  fetchWeather();
+}, [meetingResults]);
+
 
   // Initialize Cesium Viewer
   useEffect(() => {
@@ -1397,21 +1421,66 @@ const handleExportCalendar = () => {
 
             {/* Event Location */}
             <div className="bg-[var(--panel)] border border-[var(--border)] rounded p-4 mb-4">
-              <div className="flex items-center justify-between mb-3">
-                <h4 className="m-0 text-xs uppercase tracking-wide text-[var(--muted)] font-medium">
-                  Location
-                </h4>
-                <button
-                  className="text-xs px-3 py-1 bg-[var(--accent)]/10 border border-[var(--accent)]/30 text-[var(--accent)] rounded hover:bg-[var(--accent)]/20 transition-colors"
-                  onClick={() => setShowExpandedView(true)}
-                >
-                  View Details →
-                </button>
-              </div>
-              <p className="m-0 text-base font-semibold text-[var(--accent)]">
-                {meetingResults.event_location}
-              </p>
-            </div>
+  <h4 className="m-0 mb-3 text-xs uppercase tracking-wide text-[var(--muted)] font-medium">
+    Location
+  </h4>
+
+  <p className="m-0 text-base font-semibold text-[var(--accent)]">
+    {meetingResults.event_location}
+  </p>
+
+  {/* Weather details */}
+  {weather && (
+  <div className="mt-4 bg-[var(--panel)] border border-[var(--border)] rounded-lg p-3">
+    <h4 className="m-0 mb-2 text-xs uppercase tracking-wide text-[var(--muted)] font-medium">
+      Expected Weather
+    </h4>
+
+    {weather.type === "forecast" ? (
+      <div className="text-xs text-[var(--text)]">
+        <span className="font-medium text-[var(--accent)]">
+          {Math.round(weather.min)}°C – {Math.round(weather.max)}°C
+        </span>
+        <span className="text-[var(--muted)]"> • </span>
+        {Number(weather.precipitation).toFixed(2)} mm rain expected
+      </div>
+    ) : (
+      <div className="text-xs text-[var(--text)]">
+        {weather.avgTemp != null ? (
+          <>
+            <span className="font-medium text-[var(--accent)]">
+              ~{Math.round(
+                Array.isArray(weather.avgTemp)
+                  ? weather.avgTemp[0]
+                  : weather.avgTemp
+              )}°C avg
+            </span>
+          </>
+        ) : (
+          <span className="text-[var(--muted)]">No temperature data</span>
+        )}
+
+        <span className="text-[var(--muted)]"> • </span>
+
+        {weather.precipitation != null ? (
+          <>
+            {Number(
+              Array.isArray(weather.precipitation)
+                ? weather.precipitation[0]
+                : weather.precipitation
+            ).toFixed(2)}{" "}
+            mm rainfall
+          </>
+        ) : (
+          <span className="text-[var(--muted)]">No rainfall data</span>
+        )}
+      </div>
+    )}
+  </div>
+)}
+
+</div>
+
 
             {/* Dates */}
             <div className="bg-[var(--panel)] border border-[var(--border)] rounded p-4 mb-4">
