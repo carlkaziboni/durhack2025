@@ -1357,9 +1357,7 @@ function App() {
                 </div>
                 <div className="space-y-4">
                   <div>
-                    <div className="text-xs text-slate-400 mb-2">
-                      Start
-                    </div>
+                    <div className="text-xs text-slate-400 mb-2">Start</div>
                     <input
                       type="datetime-local"
                       value={availabilityStart}
@@ -1400,9 +1398,7 @@ function App() {
                     />
                   </div>
                   <div>
-                    <div className="text-xs text-slate-400 mb-2">
-                      Hours
-                    </div>
+                    <div className="text-xs text-slate-400 mb-2">Hours</div>
                     <input
                       type="number"
                       value={eventDurationHours}
