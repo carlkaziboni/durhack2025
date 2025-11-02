@@ -1112,14 +1112,6 @@ function App() {
 
       resultsFlightPathsRef.current.push(flightPath);
 
-      // Add colored marker for origin city (different color scheme than flight paths)
-      const originMarkerColor =
-        travelHours < 8
-          ? Cesium.Color.CYAN
-          : travelHours < 16
-          ? Cesium.Color.ORANGE
-          : Cesium.Color.MAGENTA;
-
       const marker = viewerRef.current.entities.add({
         name: `Origin: ${cityName}`,
         position: Cesium.Cartesian3.fromDegrees(
@@ -1129,7 +1121,7 @@ function App() {
         ),
         point: {
           pixelSize: 22,
-          color: originMarkerColor,
+          color: Cesium.Color.CYAN,
           outlineColor: Cesium.Color.WHITE,
           outlineWidth: 3,
           heightReference: Cesium.HeightReference.CLAMP_TO_GROUND,

@@ -1,8 +1,4 @@
 #!/usr/bin/env python3
-"""
-Comprehensive test suite for the retrained model.
-Tests various scenarios to verify the model and override logic work correctly.
-"""
 
 import requests
 import json
@@ -126,46 +122,45 @@ test_scenarios = [
 ]
 
 def test_scenario(scenario, index):
-    """Test a single scenario"""
     print(f"\n{'='*80}")
     print(f"Test {index + 1}/{len(test_scenarios)}: {scenario['name']}")
     print(f"{'='*80}")
     print(f"Expected: {scenario['expected']}")
     print()
-    
+
     try:
         start_time = time.time()
         response = requests.post(BASE_URL, json=scenario['data'], timeout=30)
         elapsed = time.time() - start_time
-        
+
         if response.status_code == 200:
             result = response.json()
             location = result.get('event_location', 'Unknown')
             co2 = result.get('total_co2', 0)
             avg_time = result.get('average_travel_hours', 0)
-            
+
             print(f"✅ SUCCESS ({elapsed:.3f}s)")
             print(f"   📍 Location: {location}")
             print(f"   💨 Total CO₂: {co2:.2f} kg")
             print(f"   ⏱️  Avg Travel: {avg_time:.2f} hours")
-            
-            # Check if attendee cities are in the input
+
+
             attendee_cities = list(scenario['data']['attendees'].keys())
             if location in attendee_cities:
                 print(f"   ✅ Chose attendee city ({location}) - optimal choice!")
-            
-            # Analyze if reasonable
+
+
             if co2 < 100:
                 print(f"   ✅ Low CO₂ - good choice")
             elif co2 > 5000:
                 print(f"   ⚠️  High CO₂ - might not be optimal")
-                
+
             return True
         else:
             print(f"❌ FAILED: Status {response.status_code}")
             print(f"   Response: {response.text[:200]}")
             return False
-            
+
     except Exception as e:
         print(f"❌ ERROR: {str(e)}")
         return False
@@ -177,37 +172,37 @@ def main():
     print(f"Testing {len(test_scenarios)} scenarios...")
     print(f"Base URL: {BASE_URL}")
     print()
-    
-    # Check if server is running
+
+
     try:
         response = requests.get("http://localhost:8000/docs", timeout=5)
         print("✅ Server is running")
     except:
         print("⚠️  Could not verify server, but continuing tests...")
-    
+
     results = []
     start_time = time.time()
-    
+
     for i, scenario in enumerate(test_scenarios):
         success = test_scenario(scenario, i)
         results.append((scenario['name'], success))
-        time.sleep(0.5)  # Small delay between requests
-    
+        time.sleep(0.5)
+
     total_time = time.time() - start_time
-    
-    # Summary
+
+
     print("\n" + "="*80)
     print("TEST SUMMARY")
     print("="*80)
     passed = sum(1 for _, success in results if success)
     failed = len(results) - passed
-    
+
     print(f"Total: {len(results)} tests")
     print(f"✅ Passed: {passed}")
     print(f"❌ Failed: {failed}")
     print(f"⏱️  Total time: {total_time:.2f}s")
     print()
-    
+
     if failed > 0:
         print("Failed tests:")
         for name, success in results:
