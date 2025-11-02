@@ -1,0 +1,26 @@
+{
+	"_comment": "Hard seen test file (includes all office locations we could ask you)",
+	"attendees": {
+		"London": 27,
+		"Paris": 3,
+		"Hong Kong": 19,
+		"Singapore": 12,
+		"Mumbai": 8,
+		"Dubai": 24,
+		"Shanghai": 6,
+		"Zurich": 15,
+		"Geneva": 29,
+		"Aarhus": 2,
+		"Sydney": 21,
+		"Wroclaw": 10,
+		"Budapest": 14
+	},
+	"availability_window": {
+		"start": "2026-02-11T07:30:00Z",
+		"end": "2026-03-11T10:00:00Z"
+	},
+	"event_duration": {
+		"days": 4,
+		"hours": 5
+	}
+}
