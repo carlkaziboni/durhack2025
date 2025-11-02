@@ -6,6 +6,7 @@ const ExpandedView = ({ meetingResults, onClose }) => {
   if (!meetingResults) return null;
 
   const [weather, setWeather] = useState(null);
+  
 
   useEffect(() => {
     async function fetchWeather() {
@@ -24,6 +25,7 @@ const ExpandedView = ({ meetingResults, onClose }) => {
     }
     fetchWeather();
   }, [meetingResults]);
+  
 
   return createPortal(
     <div className="fixed inset-0 bg-[var(--bg)] z-[10000] w-screen h-screen overflow-auto">

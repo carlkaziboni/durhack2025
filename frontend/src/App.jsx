@@ -5,6 +5,9 @@ import "./index.css";
 import ExpandedView from "./ExpandedView";
 import { exportToCalendar } from "./utils/exportToCalendar";
 import { getLatLonFromCity, getWeatherForDate } from "./utils/weatherService";
+import { generateMeetingEmail } from "./utils/generateEmail";
+import { getCitySummary, getCountryInfo } from "./utils/cityInfoService";
+
 
 // Set your Cesium Ion access token (optional)
 // You can get a free token at https://cesium.com/ion/
@@ -100,6 +103,9 @@ const officeLocations = [
       "H2Offices building, 2nd floor, Váci út 23-27., Budapest 1134, Hungary",
   },
 ];
+
+
+
 
 // Mock backend function - generates realistic response based on input
 const mockBackend = (meetingData) => {
@@ -270,6 +276,37 @@ function App() {
   // Results state
   const [meetingResults, setMeetingResults] = useState(null);
   const [weather, setWeather] = useState(null);
+  const [cityBriefing, setCityBriefing] = useState(null);
+
+  useEffect(() => {
+  async function fetchBriefing() {
+    if (!meetingResults) return;
+    const summary = await getCitySummary(meetingResults.event_location);
+    const country = await getCountryInfo(meetingResults.event_location);
+    setCityBriefing({ summary, country });
+  }
+  fetchBriefing();
+}, [meetingResults]);
+
+    const handleGenerateEmail = () => {
+  if (!meetingResults) {
+    alert("❗ No meeting data to generate email.");
+    return;
+  }
+
+  const html = generateMeetingEmail(meetingResults, weather, cityBriefing);
+
+  // mailto supports only plain text, so encode HTML safely
+  const subject = `Meeting Summary – ${meetingResults.event_location}`;
+  const body = encodeURIComponent(html);
+
+  // Open default email client
+  window.location.href = `mailto:?subject=${subject}&body=${body}`;
+};
+
+
+
+
   const [isLoading, setIsLoading] = useState(false);
   const eventLocationEntityRef = useRef(null);
   const resultsFlightPathsRef = useRef([]);
@@ -1239,6 +1276,31 @@ function App() {
     setOfficeMarkersVisibility(true);
   };
 
+
+  useEffect(() => {
+  async function fetchCityBriefing() {
+    if (!meetingResults) return;
+    const city = meetingResults.event_location;
+
+    const citySummary = await getCitySummary(city);
+
+    // Get country by reversing coordinates OR simple fallback:
+    const coords = await getLatLonFromCity(city);
+    let countryInfo = null;
+    if (coords) {
+      // If you want: use a reverse geocode API. But simplest:
+      countryInfo = await getCountryInfo(city); // works for many city=country names
+    }
+
+    setCityBriefing({
+      summary: citySummary,
+      country: countryInfo,
+    });
+  }
+
+  fetchCityBriefing();
+}, [meetingResults]);
+
   // Export meeting to Calendar (.ics)
   const handleExportCalendar = () => {
     exportToCalendar(meetingResults, showSuccess, showError);
@@ -1523,6 +1585,36 @@ function App() {
                       {meetingResults.total_co2.toLocaleString()} kg CO₂
                     </div>
                   </div>
+
+                  {/* City Overview Panel */}
+{cityBriefing && (
+  <div className="bg-[var(--panel)] border border-[var(--border)] rounded p-4 mt-4">
+    <h4 className="m-0 mb-3 text-xs uppercase tracking-wide text-[var(--muted)] font-medium">
+      City Overview
+    </h4>
+    <p className="text-sm text-[var(--text)]">
+      {cityBriefing.summary}
+    </p>
+
+    {cityBriefing.country && (
+      <>
+        <p className="mt-2 text-sm">
+          <strong>Region:</strong> {cityBriefing.country.region}
+        </p>
+        <p className="text-sm">
+          <strong>Languages:</strong> {cityBriefing.country.languages}
+        </p>
+        <p className="text-sm">
+          <strong>Currency:</strong> {cityBriefing.country.currency}
+        </p>
+        <p className="text-sm italic">
+          {cityBriefing.country.visaNote}
+        </p>
+      </>
+    )}
+  </div>
+)}
+
                   <div>
                     <div className="text-xs uppercase tracking-wider text-[var(--muted)] mb-2">
                       Average Travel Time
@@ -1547,6 +1639,14 @@ function App() {
               >
                 📅 Export to Calendar (.ics)
               </button>
+
+              <button
+                className="w-full py-3 px-4 border border-[var(--border)] bg-transparent text-[var(--text)] rounded hover:bg-[var(--panel)] transition-colors text-sm font-medium mb-3"
+                onClick={handleGenerateEmail}
+              >
+                ✉️ Generate Email Summary
+              </button>
+
 
               <button
                 className="w-full py-3 px-4 border border-[var(--border)] bg-transparent text-[var(--text)] rounded hover:bg-[var(--panel)] transition-colors text-sm font-medium"
