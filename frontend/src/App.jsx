@@ -4,6 +4,7 @@ import * as Cesium from "cesium";
 import "./index.css";
 import ExpandedView from "./ExpandedView";
 import { exportToCalendar } from "./utils/exportToCalendar";
+import { getLatLonFromCity, getWeatherForDate } from "./utils/weatherService";
 
 // Set your Cesium Ion access token (optional)
 // You can get a free token at https://cesium.com/ion/
@@ -268,6 +269,7 @@ function App() {
 
   // Results state
   const [meetingResults, setMeetingResults] = useState(null);
+  const [weather, setWeather] = useState(null);
   const [isLoading, setIsLoading] = useState(false);
   const eventLocationEntityRef = useRef(null);
   const resultsFlightPathsRef = useRef([]);
@@ -574,6 +576,26 @@ function App() {
       }
     };
   }, []);
+
+  // Fetch weather when meeting results change
+  useEffect(() => {
+    async function fetchWeather() {
+      if (!meetingResults) return;
+
+      const coords = await getLatLonFromCity(meetingResults.event_location);
+      if (!coords) return;
+
+      const eventDate = new Date(meetingResults.event_dates.start);
+      const weatherData = await getWeatherForDate(
+        coords.lat,
+        coords.lon,
+        eventDate
+      );
+      setWeather(weatherData);
+    }
+
+    fetchWeather();
+  }, [meetingResults]);
 
   // Function to create a curved arc with intermediate points
   const createCurvedPath = (
@@ -1454,6 +1476,36 @@ function App() {
                 <h2 className="text-[var(--text)] mb-1 text-lg font-semibold">
                   {meetingResults.event_location}
                 </h2>
+
+                {/* Weather details */}
+                {weather && (
+                  <div className="mt-4 bg-[var(--panel)] border border-[var(--border)] rounded-lg p-3">
+                    <h4 className="m-0 mb-2 text-xs uppercase tracking-wide text-[var(--muted)] font-medium">
+                      Expected Weather
+                    </h4>
+                    {weather.type === "forecast" ? (
+                      <div className="text-xs text-[var(--text)]">
+                        <span className="font-medium text-[var(--accent)]">
+                          {Math.round(weather.min)}°C – {Math.round(weather.max)}°C
+                        </span>
+                        <span className="text-[var(--muted)]"> • </span>
+                        <span className="text-[var(--muted)]">
+                          {weather.precipitation.toFixed(1)}mm rain forecast
+                        </span>
+                      </div>
+                    ) : (
+                      <div className="text-xs text-[var(--text)]">
+                        <span className="font-medium text-[var(--accent)]">
+                          Typical: ~{Math.round(weather.avgTemp)}°C
+                        </span>
+                        <span className="text-[var(--muted)]"> • </span>
+                        <span className="text-[var(--muted)]">
+                          {weather.precipitation?.toFixed(1) || "N/A"}mm avg. rainfall
+                        </span>
+                      </div>
+                    )}
+                  </div>
+                )}
 
                 <div className="space-y-4 mt-6">
                   <div>

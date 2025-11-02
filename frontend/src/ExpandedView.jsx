@@ -1,7 +1,29 @@
 import { createPortal } from "react-dom";
+import { useState, useEffect } from "react";
+import { getLatLonFromCity, getWeatherForDate } from "./utils/weatherService";
 
 const ExpandedView = ({ meetingResults, onClose }) => {
   if (!meetingResults) return null;
+
+  const [weather, setWeather] = useState(null);
+
+  useEffect(() => {
+    async function fetchWeather() {
+      const city = meetingResults.event_location;
+      const eventDate = new Date(meetingResults.event_dates.start);
+
+      const coords = await getLatLonFromCity(city);
+      if (!coords) return;
+
+      const weatherData = await getWeatherForDate(
+        coords.lat,
+        coords.lon,
+        eventDate
+      );
+      setWeather(weatherData);
+    }
+    fetchWeather();
+  }, [meetingResults]);
 
   return createPortal(
     <div className="fixed inset-0 bg-[var(--bg)] z-[10000] w-screen h-screen overflow-auto">
@@ -82,6 +104,36 @@ const ExpandedView = ({ meetingResults, onClose }) => {
               <div className="text-xs text-[var(--muted)]">hours</div>
             </div>
           </div>
+
+          {/* Weather Card */}
+          {weather && (
+            <div className="bg-[var(--panel)] border border-[var(--border)] rounded-lg p-4">
+              <h4 className="text-[var(--muted)] text-xs uppercase tracking-wide m-0 mb-3 font-medium">
+                Weather
+              </h4>
+              <div className="text-center">
+                {weather.type === "forecast" ? (
+                  <div>
+                    <div className="text-2xl font-bold text-cyan-400 mb-1">
+                      {Math.round(weather.min)}° - {Math.round(weather.max)}°
+                    </div>
+                    <div className="text-xs text-[var(--muted)]">
+                      {weather.precipitation?.toFixed(1) || "0"}mm forecast
+                    </div>
+                  </div>
+                ) : (
+                  <div>
+                    <div className="text-2xl font-bold text-cyan-400 mb-1">
+                      ~{Math.round(weather.avgTemp)}°C
+                    </div>
+                    <div className="text-xs text-[var(--muted)]">
+                      {weather.precipitation?.toFixed(1) || "N/A"}mm avg rainfall
+                    </div>
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
         </div>
 
         {/* Detailed Statistics */}
