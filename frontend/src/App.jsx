@@ -3,6 +3,8 @@ import { createPortal } from "react-dom";
 import * as Cesium from "cesium";
 import "./index.css";
 import ExpandedView from "./ExpandedView";
+import { exportToCalendar } from "./utils/exportToCalendar";
+
 
 // Set your Cesium Ion access token (optional)
 // You can get a free token at https://cesium.com/ion/
@@ -1212,6 +1214,13 @@ function App() {
     setOfficeMarkersVisibility(true);
   };
 
+  // Export meeting to Calendar (.ics)
+const handleExportCalendar = () => {
+  exportToCalendar(meetingResults, showSuccess, showError);
+};
+
+
+
   // Reset View Handler - Recenter globe to default view
   const handleResetView = () => {
     if (!viewerRef.current) return;
@@ -1470,6 +1479,13 @@ function App() {
                 onClick={() => setShowExpandedView(true)}
               >
                 View Full Details
+              </button>
+
+              <button
+                className="w-full py-3 px-4 border border-[var(--border)] bg-transparent text-[var(--text)] rounded hover:bg-[var(--panel)] transition-colors text-sm font-medium mb-3"
+                onClick={handleExportCalendar}
+              >
+                📅 Export to Calendar (.ics)
               </button>
 
               <button

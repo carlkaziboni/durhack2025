@@ -1,0 +1,34 @@
+{
+  "hash": "7ee1fb62",
+  "configHash": "16aab9d0",
+  "lockfileHash": "3dce1ca6",
+  "browserHash": "0fdf003f",
+  "optimized": {
+    "react": {
+      "src": "../../node_modules/react/index.js",
+      "file": "react.js",
+      "fileHash": "d85bba4c",
+      "needsInterop": true
+    },
+    "react-dom/client": {
+      "src": "../../node_modules/react-dom/client.js",
+      "file": "react-dom_client.js",
+      "fileHash": "54d84bc7",
+      "needsInterop": true
+    },
+    "cesium": {
+      "src": "../../node_modules/cesium/Source/Cesium.js",
+      "file": "cesium.js",
+      "fileHash": "7b1122b7",
+      "needsInterop": false
+    }
+  },
+  "chunks": {
+    "chunk-TXI3HGC7": {
+      "file": "chunk-TXI3HGC7.js"
+    },
+    "chunk-7D4SUZUM": {
+      "file": "chunk-7D4SUZUM.js"
+    }
+  }
+}
