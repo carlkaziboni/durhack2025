@@ -1260,22 +1260,22 @@ function App() {
   };
 
   return (
-    <div className="grid grid-cols-[420px_1fr] h-screen w-full relative">
-      <div className="bg-[var(--bg)] overflow-y-auto border-r border-[var(--border)] flex flex-col text-[var(--text)]">
+    <div className="grid grid-cols-[420px_1fr] h-screen w-full relative size-full bg-slate-950">
+      <div className="bg-slate-950 overflow-y-auto border-r border-slate-800 flex flex-col text-white">
         {/* Header */}
-        <div className="p-8 border-b border-[var(--border)]">
+        <div className="p-8 border-b border-slate-800">
           <div className="flex items-center justify-between mb-3">
-            <h1 className="text-[var(--text)] text-xl font-semibold m-0">
+            <h1 className="text-white text-xl font-semibold m-0">
               Meeting Planner
             </h1>
             <button
               onClick={() => setShowJsonModal(true)}
-              className="px-3 py-1.5 bg-[var(--panel)] border border-[var(--border)] text-[var(--muted)] rounded hover:bg-[var(--card)] hover:text-[var(--text)] transition-colors text-sm font-medium"
+              className="px-3 py-1.5 bg-slate-900 border border-slate-700 text-slate-300 rounded hover:bg-slate-800 hover:text-white transition-colors text-sm font-medium"
             >
               Import JSON
             </button>
           </div>
-          <p className="text-[var(--muted)] text-sm m-0">
+          <p className="text-slate-400 text-sm m-0">
             Optimal location minimizing carbon emissions
           </p>
         </div>
@@ -1286,7 +1286,7 @@ function App() {
             <>
               {/* Attendees */}
               <div className="mb-8">
-                <div className="text-xs uppercase tracking-wider text-[var(--muted)] mb-4">
+                <div className="text-xs uppercase tracking-wider text-slate-400 mb-4">
                   Attendees
                 </div>
                 <div className="space-y-3">
@@ -1297,7 +1297,7 @@ function App() {
                         onChange={(e) =>
                           updateCity(cityData.id, "city", e.target.value)
                         }
-                        className="flex-1 px-3 py-2 border border-[var(--border)] rounded bg-[var(--panel)] text-[var(--text)] text-sm cursor-pointer transition-colors focus:outline-none focus:ring-2 focus:ring-[var(--accent)]"
+                        className="flex-1 px-3 py-2 border border-slate-800 rounded bg-slate-900 text-white text-sm cursor-pointer transition-colors focus:outline-none focus:ring-2 focus:ring-emerald-500"
                       >
                         <option value="">Select location...</option>
                         {officeLocations.map((office) => (
@@ -1318,7 +1318,7 @@ function App() {
                             parseInt(e.target.value) || 0
                           )
                         }
-                        className="w-20 px-3 py-2 border border-[var(--border)] rounded bg-[var(--panel)] text-[var(--text)] text-sm transition-colors focus:outline-none focus:ring-2 focus:ring-[var(--accent)]"
+                        className="w-20 px-3 py-2 border border-slate-800 rounded bg-slate-900 text-white text-sm transition-colors focus:outline-none focus:ring-2 focus:ring-emerald-500"
                       />
                       {cities.length > 1 && (
                         <button
@@ -1331,9 +1331,9 @@ function App() {
                     </div>
                   ))}
                 </div>
-                <div className="mt-4 pt-4 border-t border-[var(--border)] flex items-center justify-between text-sm">
-                  <span className="text-[var(--muted)]">Total Attendees</span>
-                  <span className="text-[var(--text)] font-semibold">
+                <div className="mt-4 pt-4 border-t border-slate-800 flex items-center justify-between text-sm">
+                  <span className="text-slate-400">Total Attendees</span>
+                  <span className="text-white font-semibold">
                     {cities.reduce(
                       (sum, city) => sum + (parseInt(city.attendees) || 0),
                       0
@@ -1342,53 +1342,53 @@ function App() {
                 </div>
                 <button
                   onClick={addCity}
-                  className="mt-4 w-full py-2 px-4 bg-[var(--accent)]/10 border border-[var(--accent)]/30 text-[var(--accent)] rounded hover:bg-[var(--accent)]/20 hover:border-[var(--accent)]/50 transition-colors text-sm font-medium"
+                  className="mt-4 w-full py-2 px-4 bg-emerald-500/10 border border-emerald-500/30 text-emerald-500 rounded hover:bg-emerald-500/20 hover:border-emerald-500/50 transition-colors text-sm font-medium"
                 >
                   + Add Location
                 </button>
               </div>
 
-              <hr className="border-none border-t border-[var(--border)] my-8" />
+              <hr className="border-none border-t border-slate-800 my-8" />
 
               {/* Availability Window */}
               <div className="mb-8">
-                <div className="text-xs uppercase tracking-wider text-[var(--muted)] mb-4">
+                <div className="text-xs uppercase tracking-wider text-slate-400 mb-4">
                   Availability Window
                 </div>
                 <div className="space-y-4">
                   <div>
-                    <div className="text-xs text-[var(--muted)] mb-2">
+                    <div className="text-xs text-slate-400 mb-2">
                       Start
                     </div>
                     <input
                       type="datetime-local"
                       value={availabilityStart}
                       onChange={(e) => setAvailabilityStart(e.target.value)}
-                      className="w-full px-3 py-2 border border-[var(--border)] rounded bg-[var(--panel)] text-[var(--text)] text-sm transition-colors focus:outline-none focus:ring-2 focus:ring-[var(--accent)]"
+                      className="w-full px-3 py-2 border border-slate-800 rounded bg-slate-900 text-white text-sm transition-colors focus:outline-none focus:ring-2 focus:ring-emerald-500"
                     />
                   </div>
                   <div>
-                    <div className="text-xs text-[var(--muted)] mb-2">End</div>
+                    <div className="text-xs text-slate-400 mb-2">End</div>
                     <input
                       type="datetime-local"
                       value={availabilityEnd}
                       onChange={(e) => setAvailabilityEnd(e.target.value)}
-                      className="w-full px-3 py-2 border border-[var(--border)] rounded bg-[var(--panel)] text-[var(--text)] text-sm transition-colors focus:outline-none focus:ring-2 focus:ring-[var(--accent)]"
+                      className="w-full px-3 py-2 border border-slate-800 rounded bg-slate-900 text-white text-sm transition-colors focus:outline-none focus:ring-2 focus:ring-emerald-500"
                     />
                   </div>
                 </div>
               </div>
 
-              <hr className="border-none border-t border-[var(--border)] my-8" />
+              <hr className="border-none border-t border-slate-800 my-8" />
 
               {/* Event Duration */}
               <div className="mb-8">
-                <div className="text-xs uppercase tracking-wider text-[var(--muted)] mb-4">
+                <div className="text-xs uppercase tracking-wider text-slate-400 mb-4">
                   Event Duration
                 </div>
                 <div className="grid grid-cols-2 gap-4">
                   <div>
-                    <div className="text-xs text-[var(--muted)] mb-2">Days</div>
+                    <div className="text-xs text-slate-400 mb-2">Days</div>
                     <input
                       type="number"
                       value={eventDurationDays}
@@ -1396,11 +1396,11 @@ function App() {
                       onChange={(e) =>
                         setEventDurationDays(parseInt(e.target.value) || 0)
                       }
-                      className="w-full px-3 py-2 border border-[var(--border)] rounded bg-[var(--panel)] text-[var(--text)] text-sm transition-colors focus:outline-none focus:ring-2 focus:ring-[var(--accent)]"
+                      className="w-full px-3 py-2 border border-slate-800 rounded bg-slate-900 text-white text-sm transition-colors focus:outline-none focus:ring-2 focus:ring-emerald-500"
                     />
                   </div>
                   <div>
-                    <div className="text-xs text-[var(--muted)] mb-2">
+                    <div className="text-xs text-slate-400 mb-2">
                       Hours
                     </div>
                     <input
@@ -1411,7 +1411,7 @@ function App() {
                       onChange={(e) =>
                         setEventDurationHours(parseInt(e.target.value) || 0)
                       }
-                      className="w-full px-3 py-2 border border-[var(--border)] rounded bg-[var(--panel)] text-[var(--text)] text-sm transition-colors focus:outline-none focus:ring-2 focus:ring-[var(--accent)]"
+                      className="w-full px-3 py-2 border border-slate-800 rounded bg-slate-900 text-white text-sm transition-colors focus:outline-none focus:ring-2 focus:ring-emerald-500"
                     />
                   </div>
                 </div>
@@ -1431,7 +1431,7 @@ function App() {
               <button
                 onClick={handleSubmitMeeting}
                 disabled={isLoading}
-                className="w-full py-3 px-4 bg-[var(--accent)] text-white rounded hover:bg-[var(--accent)]/90 transition-colors text-sm font-semibold disabled:opacity-50 disabled:cursor-not-allowed"
+                className="w-full py-3 px-4 bg-emerald-500 text-white rounded hover:bg-emerald-500/90 transition-colors text-sm font-semibold disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 {isLoading ? "Calculating..." : "Plan Meeting"}
               </button>
@@ -1440,7 +1440,7 @@ function App() {
             <>
               {/* Attendees */}
               <div className="mb-8">
-                <div className="text-xs uppercase tracking-wider text-[var(--muted)] mb-4">
+                <div className="text-xs uppercase tracking-wider text-slate-400 mb-4">
                   Attendees
                 </div>
                 <div className="space-y-3">
@@ -1450,15 +1450,15 @@ function App() {
                         key={city}
                         className="flex items-center justify-between text-sm"
                       >
-                        <span className="text-[var(--muted)]">{city}</span>
-                        <span className="text-[var(--text)]">{count}</span>
+                        <span className="text-slate-400">{city}</span>
+                        <span className="text-white">{count}</span>
                       </div>
                     )
                   )}
                 </div>
-                <div className="mt-4 pt-4 border-t border-[var(--border)] flex items-center justify-between text-sm">
-                  <span className="text-[var(--muted)]">Total Attendees</span>
-                  <span className="text-[var(--text)] font-semibold">
+                <div className="mt-4 pt-4 border-t border-slate-800 flex items-center justify-between text-sm">
+                  <span className="text-slate-400">Total Attendees</span>
+                  <span className="text-white font-semibold">
                     {Object.values(
                       meetingResults.meeting_data.attendees
                     ).reduce((sum, count) => sum + count, 0)}
@@ -1466,31 +1466,31 @@ function App() {
                 </div>
               </div>
 
-              <hr className="border-none border-t border-[var(--border)] my-8" />
+              <hr className="border-none border-t border-slate-800 my-8" />
 
               {/* Recommended Location */}
               <div className="mb-8">
                 <div className="inline-block px-2 py-1 bg-emerald-500/10 border border-emerald-500/20 rounded text-xs text-emerald-400 mb-4">
                   RECOMMENDED LOCATION
                 </div>
-                <h2 className="text-[var(--text)] mb-1 text-lg font-semibold">
+                <h2 className="text-white mb-1 text-lg font-semibold">
                   {meetingResults.event_location}
                 </h2>
 
                 {/* Weather details */}
                 {weather && (
-                  <div className="mt-4 bg-[var(--panel)] border border-[var(--border)] rounded-lg p-3">
-                    <h4 className="m-0 mb-2 text-xs uppercase tracking-wide text-[var(--muted)] font-medium">
+                  <div className="mt-4 bg-slate-900 border border-slate-800 rounded-lg p-3">
+                    <h4 className="m-0 mb-2 text-xs uppercase tracking-wide text-slate-400 font-medium">
                       Expected Weather
                     </h4>
                     {weather.type === "forecast" ? (
-                      <div className="text-xs text-[var(--text)]">
-                        <span className="font-medium text-[var(--accent)]">
+                      <div className="text-xs text-white">
+                        <span className="font-medium text-emerald-500">
                           {Math.round(weather.min)}°C –{" "}
                           {Math.round(weather.max)}°C
                         </span>
-                        <span className="text-[var(--muted)]"> • </span>
-                        <span className="text-[var(--muted)]">
+                        <span className="text-slate-400"> • </span>
+                        <span className="text-slate-400">
                           {(typeof weather.precipitation === "number"
                             ? weather.precipitation.toFixed(1)
                             : weather.precipitation) || 0}
@@ -1498,12 +1498,12 @@ function App() {
                         </span>
                       </div>
                     ) : (
-                      <div className="text-xs text-[var(--text)]">
-                        <span className="font-medium text-[var(--accent)]">
+                      <div className="text-xs text-white">
+                        <span className="font-medium text-emerald-500">
                           Typical: ~{Math.round(weather.avgTemp)}°C
                         </span>
-                        <span className="text-[var(--muted)]"> • </span>
-                        <span className="text-[var(--muted)]">
+                        <span className="text-slate-400"> • </span>
+                        <span className="text-slate-400">
                           {(typeof weather.precipitation === "number"
                             ? weather.precipitation.toFixed(1)
                             : weather.precipitation) || "N/A"}
@@ -1516,18 +1516,18 @@ function App() {
 
                 <div className="space-y-4 mt-6">
                   <div>
-                    <div className="text-xs uppercase tracking-wider text-[var(--muted)] mb-2">
+                    <div className="text-xs uppercase tracking-wider text-slate-400 mb-2">
                       Total Emissions
                     </div>
-                    <div className="text-[var(--text)] font-semibold">
+                    <div className="text-white font-semibold">
                       {meetingResults.total_co2.toLocaleString()} kg CO₂
                     </div>
                   </div>
                   <div>
-                    <div className="text-xs uppercase tracking-wider text-[var(--muted)] mb-2">
+                    <div className="text-xs uppercase tracking-wider text-slate-400 mb-2">
                       Average Travel Time
                     </div>
-                    <div className="text-[var(--text)] font-semibold">
+                    <div className="text-white font-semibold">
                       {meetingResults.average_travel_hours.toFixed(1)} hours
                     </div>
                   </div>
@@ -1542,14 +1542,14 @@ function App() {
               </button>
 
               <button
-                className="w-full py-3 px-4 border border-[var(--border)] bg-transparent text-[var(--text)] rounded hover:bg-[var(--panel)] transition-colors text-sm font-medium mb-3"
+                className="w-full py-3 px-4 border border-slate-800 bg-transparent text-white rounded hover:bg-slate-950 transition-colors text-sm font-medium mb-3"
                 onClick={handleExportCalendar}
               >
                 📅 Export to Calendar (.ics)
               </button>
 
               <button
-                className="w-full py-3 px-4 border border-[var(--border)] bg-transparent text-[var(--text)] rounded hover:bg-[var(--panel)] transition-colors text-sm font-medium"
+                className="w-full py-3 px-4 border border-slate-800 bg-transparent text-white rounded hover:bg-slate-950 transition-colors text-sm font-medium"
                 onClick={handleClearPaths}
               >
                 Edit Details
@@ -1577,11 +1577,11 @@ function App() {
             zIndex: 1000,
           }}
         >
-          <div className="bg-[var(--card)] border border-[var(--border)] rounded-lg px-4 py-3 shadow-lg backdrop-blur-md">
-            <h4 className="m-0 mb-2 text-sm font-semibold text-[var(--text)]">
+          <div className="bg-slate-950 border border-slate-800 rounded-lg px-4 py-3 shadow-lg backdrop-blur-md">
+            <h4 className="m-0 mb-2 text-sm font-semibold text-white">
               {hoveredOffice.city}
             </h4>
-            <p className="m-0 text-xs text-[var(--muted)] leading-relaxed">
+            <p className="m-0 text-xs text-slate-400 leading-relaxed">
               {hoveredOffice.address}
             </p>
           </div>
@@ -1600,13 +1600,13 @@ function App() {
       {showJsonModal &&
         createPortal(
           <div className="fixed inset-0 bg-black/70 z-[20000] flex items-center justify-center p-4">
-            <div className="bg-[var(--card)] border border-[var(--border)] rounded-lg w-full max-w-3xl max-h-[90vh] overflow-hidden flex flex-col">
+            <div className="bg-slate-950 border border-slate-800 rounded-lg w-full max-w-3xl max-h-[90vh] overflow-hidden flex flex-col">
               {/* Header */}
-              <div className="px-6 py-4 border-b border-[var(--border)]">
-                <h2 className="text-[var(--text)] text-xl font-semibold m-0">
+              <div className="px-6 py-4 border-b border-slate-800">
+                <h2 className="text-white text-xl font-semibold m-0">
                   Import Meeting Data
                 </h2>
-                <p className="text-[var(--muted)] text-sm mt-1 m-0">
+                <p className="text-slate-400 text-sm mt-1 m-0">
                   Upload a JSON file or paste meeting data
                 </p>
               </div>
@@ -1614,13 +1614,13 @@ function App() {
               {/* Tabs */}
               <div className="flex-1 overflow-auto">
                 <div className="px-6 pt-4">
-                  <div className="flex gap-2 border-b border-[var(--border)]">
+                  <div className="flex gap-2 border-b border-slate-800">
                     <button
                       onClick={() => setJsonModalTab("paste")}
                       className={`px-4 py-2 text-sm font-medium transition-colors ${
                         jsonModalTab !== "paste"
-                          ? "text-[var(--muted)] hover:text-[var(--text)]"
-                          : "text-[var(--accent)] border-b-2 border-[var(--accent)]"
+                          ? "text-slate-400 hover:text-white"
+                          : "text-emerald-500 border-b-2 border-emerald-500"
                       }`}
                     >
                       Paste JSON
@@ -1629,8 +1629,8 @@ function App() {
                       onClick={() => setJsonModalTab("upload")}
                       className={`px-4 py-2 text-sm font-medium transition-colors ${
                         jsonModalTab !== "upload"
-                          ? "text-[var(--muted)] hover:text-[var(--text)]"
-                          : "text-[var(--accent)] border-b-2 border-[var(--accent)]"
+                          ? "text-slate-400 hover:text-white"
+                          : "text-emerald-500 border-b-2 border-emerald-500"
                       }`}
                     >
                       Upload File
@@ -1654,14 +1654,14 @@ function App() {
               </div>
 
               {/* Footer */}
-              <div className="px-6 py-4 border-t border-[var(--border)] flex justify-end gap-3">
+              <div className="px-6 py-4 border-t border-slate-800 flex justify-end gap-3">
                 <button
                   onClick={() => {
                     setShowJsonModal(false);
                     setJsonModalTab("paste");
                     setJsonModalText("");
                   }}
-                  className="px-4 py-2 border border-[var(--border)] bg-transparent text-[var(--text)] rounded hover:bg-[var(--panel)] transition-colors text-sm font-medium"
+                  className="px-4 py-2 border border-slate-800 bg-transparent text-white rounded hover:bg-slate-950 transition-colors text-sm font-medium"
                 >
                   Cancel
                 </button>
@@ -1703,19 +1703,19 @@ function PasteTab({ jsonInput, setJsonInput, onLoadJSON, onFileUpload }) {
         value={jsonInput}
         onChange={(e) => setJsonInput(e.target.value)}
         placeholder={exampleJson}
-        className="w-full px-3 py-2 border border-[var(--border)] rounded bg-[var(--bg)] text-[var(--text)] text-sm font-mono min-h-[300px] resize-none transition-colors focus:outline-none focus:ring-2 focus:ring-[var(--accent)]"
+        className="w-full px-3 py-2 border border-slate-800 rounded bg-slate-950 text-white text-sm font-mono min-h-[300px] resize-none transition-colors focus:outline-none focus:ring-2 focus:ring-emerald-500"
       />
       <div className="flex gap-2">
         <button
           onClick={onLoadJSON}
           disabled={!jsonInput.trim()}
-          className="flex-1 py-2 px-4 bg-[var(--accent)] text-white rounded hover:bg-[var(--accent)]/90 transition-colors text-sm font-medium disabled:opacity-50 disabled:cursor-not-allowed"
+          className="flex-1 py-2 px-4 bg-emerald-500 text-white rounded hover:bg-emerald-500/90 transition-colors text-sm font-medium disabled:opacity-50 disabled:cursor-not-allowed"
         >
           Import Meeting Data
         </button>
         <button
           onClick={() => setJsonInput(exampleJson)}
-          className="py-2 px-4 border border-[var(--border)] bg-transparent text-[var(--text)] rounded hover:bg-[var(--panel)] transition-colors text-sm font-medium"
+          className="py-2 px-4 border border-slate-800 bg-transparent text-white rounded hover:bg-slate-950 transition-colors text-sm font-medium"
         >
           Load Example
         </button>
@@ -1727,7 +1727,7 @@ function PasteTab({ jsonInput, setJsonInput, onLoadJSON, onFileUpload }) {
 function UploadTab({ onFileUpload }) {
   return (
     <div className="space-y-4">
-      <div className="border-2 border-dashed border-[var(--border)] rounded-lg p-12 text-center hover:border-[var(--accent)] transition-colors">
+      <div className="border-2 border-dashed border-slate-800 rounded-lg p-12 text-center hover:border-emerald-500 transition-colors">
         <input
           type="file"
           accept=".json"
@@ -1736,9 +1736,9 @@ function UploadTab({ onFileUpload }) {
           id="json-upload"
         />
         <label htmlFor="json-upload" className="cursor-pointer">
-          <div className="w-12 h-12 rounded-full bg-[var(--panel)] mx-auto mb-4 flex items-center justify-center">
+          <div className="w-12 h-12 rounded-full bg-slate-950 mx-auto mb-4 flex items-center justify-center">
             <svg
-              className="w-6 h-6 text-[var(--muted)]"
+              className="w-6 h-6 text-slate-400"
               fill="none"
               viewBox="0 0 24 24"
               stroke="currentColor"
@@ -1751,8 +1751,8 @@ function UploadTab({ onFileUpload }) {
               />
             </svg>
           </div>
-          <p className="text-[var(--text)] mb-2">Click to upload JSON file</p>
-          <p className="text-sm text-[var(--muted)]">or drag and drop</p>
+          <p className="text-white mb-2">Click to upload JSON file</p>
+          <p className="text-sm text-slate-400">or drag and drop</p>
         </label>
       </div>
     </div>
