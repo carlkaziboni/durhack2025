@@ -1,11 +1,18 @@
 import { createPortal } from "react-dom";
 import { useState, useEffect } from "react";
 import { getLatLonFromCity, getWeatherForDate } from "./utils/weatherService";
+import {
+  getTimezoneFromCity,
+  calculateTimeDifference,
+  getJetLagSeverity,
+  suggestArrivalBufferDays,
+} from "./utils/timezoneService";
 
 const ExpandedView = ({ meetingResults, onClose }) => {
   if (!meetingResults) return null;
 
   const [weather, setWeather] = useState(null);
+  const [jetLagData, setJetLagData] = useState(null);
 
   useEffect(() => {
     async function fetchWeather() {
@@ -23,6 +30,56 @@ const ExpandedView = ({ meetingResults, onClose }) => {
       setWeather(weatherData);
     }
     fetchWeather();
+  }, [meetingResults]);
+
+  useEffect(() => {
+    async function calculateJetLag() {
+      const destination = meetingResults.event_location;
+      const attendees = meetingResults.meeting_data?.attendees || {};
+
+      // Get destination timezone
+      const destTimezone = await getTimezoneFromCity(destination);
+      if (!destTimezone) {
+        setJetLagData(null);
+        return;
+      }
+
+      // Calculate jet lag for each attendee city
+      const jetLagResults = {};
+      
+      for (const [attendeeCity, count] of Object.entries(attendees)) {
+        if (attendeeCity === destination) {
+          // Same city - no jet lag
+          jetLagResults[attendeeCity] = {
+            timeDiff: 0,
+            severity: { severity: "None", emoji: "✅", description: "Same timezone" },
+            bufferDays: 0,
+            homeTimezone: destTimezone,
+            destTimezone: destTimezone,
+          };
+          continue;
+        }
+
+        const homeTimezone = await getTimezoneFromCity(attendeeCity);
+        if (!homeTimezone) continue;
+
+        const timeDiff = calculateTimeDifference(homeTimezone, destTimezone);
+        const severity = getJetLagSeverity(timeDiff);
+        const bufferDays = suggestArrivalBufferDays(timeDiff);
+
+        jetLagResults[attendeeCity] = {
+          timeDiff,
+          severity,
+          bufferDays,
+          homeTimezone,
+          destTimezone,
+        };
+      }
+
+      setJetLagData(jetLagResults);
+    }
+
+    calculateJetLag();
   }, [meetingResults]);
 
   return createPortal(
@@ -189,7 +246,7 @@ const ExpandedView = ({ meetingResults, onClose }) => {
         </div>
 
         {/* Per-City Travel Hours */}
-        <div className="bg-[var(--card)] border border-[var(--border)] rounded-lg p-5">
+        <div className="bg-[var(--card)] border border-[var(--border)] rounded-lg p-5 mb-6">
           <h4 className="text-[var(--muted)] text-xs uppercase tracking-wide m-0 mb-4 font-medium">
             By Location
           </h4>
@@ -211,6 +268,70 @@ const ExpandedView = ({ meetingResults, onClose }) => {
             )}
           </div>
         </div>
+
+        {/* Jet Lag Impact Calculator */}
+        {jetLagData && (
+          <div className="bg-[var(--card)] border border-[var(--border)] rounded-lg p-5">
+            <h4 className="text-[var(--muted)] text-xs uppercase tracking-wide m-0 mb-4 font-medium">
+              Jet Lag Impact Calculator
+            </h4>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+              {Object.entries(jetLagData).map(([city, data]) => {
+                const attendeeCount =
+                  meetingResults.meeting_data?.attendees?.[city] || 1;
+                const timeDiffDisplay =
+                  data.timeDiff === null
+                    ? "?"
+                    : data.timeDiff > 0
+                    ? `+${data.timeDiff.toFixed(1)}h`
+                    : `${data.timeDiff.toFixed(1)}h`;
+
+                return (
+                  <div
+                    key={city}
+                    className="bg-[var(--panel)] border border-[var(--border)] rounded-lg p-4"
+                  >
+                    <div className="flex items-start justify-between mb-2">
+                      <div className="flex-1">
+                        <div className="flex items-center gap-2 mb-1">
+                          <span className="text-sm font-semibold text-[var(--text)]">
+                            {city}
+                          </span>
+                          <span className="text-xs text-[var(--muted)]">
+                            ({attendeeCount} attendee{attendeeCount > 1 ? "s" : ""})
+                          </span>
+                        </div>
+                        <div className="flex items-center gap-2 mb-2">
+                          <span className="text-sm text-[var(--text)] font-medium">
+                            {city} → {meetingResults.event_location} =
+                          </span>
+                          <span className="text-lg">{data.severity.emoji}</span>
+                          <span className="text-sm font-semibold text-[var(--text)]">
+                            {data.severity.severity}
+                          </span>
+                          <span className="text-xs text-[var(--muted)]">
+                            ({Math.abs(data.timeDiff || 0).toFixed(1)}h shift)
+                          </span>
+                        </div>
+                        <div className="text-xs text-[var(--muted)] mb-2">
+                          Time difference: {timeDiffDisplay}
+                        </div>
+                        {data.bufferDays > 0 && (
+                          <div className="mt-2 pt-2 border-t border-[var(--border)]">
+                            <div className="text-xs text-amber-400 font-medium">
+                              💡 Suggested arrival buffer: {data.bufferDays} day
+                              {data.bufferDays > 1 ? "s" : ""}
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        )}
       </div>
     </div>,
     document.body
