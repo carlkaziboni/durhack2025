@@ -442,7 +442,9 @@ function App() {
         const upComponent = Cesium.Cartesian3.dot(direction, up);
 
         // Calculate heading (angle in horizontal plane)
-        const heading = Math.atan2(eastComponent, northComponent);
+        let heading = Math.atan2(eastComponent, northComponent);
+        // Adjust for model orientation (90 degrees offset)
+        heading -= Cesium.Math.toRadians(90);
 
         // Calculate pitch (angle up/down)
         const horizontalLength = Math.sqrt(
@@ -502,7 +504,9 @@ function App() {
 
       // Calculate heading (rotation around up axis, in east-north plane)
       // Heading is 0 when pointing north, increases clockwise
-      const heading = Math.atan2(eastComponent, northComponent);
+      let heading = Math.atan2(eastComponent, northComponent);
+      // Adjust for model orientation (90 degrees offset)
+      heading -= Cesium.Math.toRadians(90);
 
       // Calculate pitch (rotation around east axis)
       // Positive pitch means nose up
@@ -1117,9 +1121,9 @@ function App() {
         position: positionProperty,
         orientation: orientation,
         model: {
-          uri: "/res/airplane.glb", // Local airplane GLB model
-          minimumPixelSize: 64,
-          maximumScale: 2000,
+          uri: "/res/planeblender.glb", // Local airplane GLB model
+          minimumPixelSize: 128,
+          maximumScale: 4000,
         },
       });
 
