@@ -5,7 +5,6 @@ import "./index.css";
 import ExpandedView from "./ExpandedView";
 import { exportToCalendar } from "./utils/exportToCalendar";
 
-
 // Set your Cesium Ion access token (optional)
 // You can get a free token at https://cesium.com/ion/
 // If you have a valid token, uncomment and replace with your actual token
@@ -1215,11 +1214,9 @@ function App() {
   };
 
   // Export meeting to Calendar (.ics)
-const handleExportCalendar = () => {
-  exportToCalendar(meetingResults, showSuccess, showError);
-};
-
-
+  const handleExportCalendar = () => {
+    exportToCalendar(meetingResults, showSuccess, showError);
+  };
 
   // Reset View Handler - Recenter globe to default view
   const handleResetView = () => {
