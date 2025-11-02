@@ -1491,7 +1491,7 @@ function App() {
                         </span>
                         <span className="text-[var(--muted)]"> • </span>
                         <span className="text-[var(--muted)]">
-                          {weather.precipitation.toFixed(1)}mm rain forecast
+                          {(typeof weather.precipitation === 'number' ? weather.precipitation.toFixed(1) : weather.precipitation) || 0}mm rain forecast
                         </span>
                       </div>
                     ) : (
@@ -1501,7 +1501,7 @@ function App() {
                         </span>
                         <span className="text-[var(--muted)]"> • </span>
                         <span className="text-[var(--muted)]">
-                          {weather.precipitation?.toFixed(1) || "N/A"}mm avg.
+                          {(typeof weather.precipitation === 'number' ? weather.precipitation.toFixed(1) : weather.precipitation) || "N/A"}mm avg.
                           rainfall
                         </span>
                       </div>
