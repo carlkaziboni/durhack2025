@@ -1486,7 +1486,8 @@ function App() {
                     {weather.type === "forecast" ? (
                       <div className="text-xs text-[var(--text)]">
                         <span className="font-medium text-[var(--accent)]">
-                          {Math.round(weather.min)}°C – {Math.round(weather.max)}°C
+                          {Math.round(weather.min)}°C –{" "}
+                          {Math.round(weather.max)}°C
                         </span>
                         <span className="text-[var(--muted)]"> • </span>
                         <span className="text-[var(--muted)]">
@@ -1500,7 +1501,8 @@ function App() {
                         </span>
                         <span className="text-[var(--muted)]"> • </span>
                         <span className="text-[var(--muted)]">
-                          {weather.precipitation?.toFixed(1) || "N/A"}mm avg. rainfall
+                          {weather.precipitation?.toFixed(1) || "N/A"}mm avg.
+                          rainfall
                         </span>
                       </div>
                     )}

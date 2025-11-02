@@ -127,7 +127,8 @@ const ExpandedView = ({ meetingResults, onClose }) => {
                       ~{Math.round(weather.avgTemp)}°C
                     </div>
                     <div className="text-xs text-[var(--muted)]">
-                      {weather.precipitation?.toFixed(1) || "N/A"}mm avg rainfall
+                      {weather.precipitation?.toFixed(1) || "N/A"}mm avg
+                      rainfall
                     </div>
                   </div>
                 )}
