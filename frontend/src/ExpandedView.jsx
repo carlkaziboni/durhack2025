@@ -6,7 +6,6 @@ const ExpandedView = ({ meetingResults, onClose }) => {
   if (!meetingResults) return null;
 
   const [weather, setWeather] = useState(null);
-  
 
   useEffect(() => {
     async function fetchWeather() {
@@ -25,7 +24,6 @@ const ExpandedView = ({ meetingResults, onClose }) => {
     }
     fetchWeather();
   }, [meetingResults]);
-  
 
   return createPortal(
     <div className="fixed inset-0 bg-[var(--bg)] z-[10000] w-screen h-screen overflow-auto">
@@ -97,11 +95,24 @@ const ExpandedView = ({ meetingResults, onClose }) => {
           {/* Average Travel Time Card */}
           <div className="bg-[var(--panel)] border border-[var(--border)] rounded-lg p-4">
             <h4 className="text-[var(--muted)] text-xs uppercase tracking-wide m-0 mb-3 font-medium">
-              Avg Travel
+              Mean Travel
             </h4>
             <div className="text-center">
               <div className="text-2xl font-bold text-[var(--accent)] mb-1">
                 {meetingResults.average_travel_hours}
+              </div>
+              <div className="text-xs text-[var(--muted)]">hours</div>
+            </div>
+          </div>
+
+          {/* Median Travel Time Card */}
+          <div className="bg-[var(--panel)] border border-[var(--border)] rounded-lg p-4">
+            <h4 className="text-[var(--muted)] text-xs uppercase tracking-wide m-0 mb-3 font-medium">
+              Median Travel
+            </h4>
+            <div className="text-center">
+              <div className="text-2xl font-bold text-cyan-400 mb-1">
+                {meetingResults.median_travel_hours}
               </div>
               <div className="text-xs text-[var(--muted)]">hours</div>
             </div>
