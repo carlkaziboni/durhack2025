@@ -1340,7 +1340,7 @@ function App() {
             </button>
           </div>
           <p className="text-[var(--muted)] text-sm m-0">
-            Optimal location minimizing carbon emissions
+            Optimal location minimising carbon emissions
           </p>
         </div>
 
