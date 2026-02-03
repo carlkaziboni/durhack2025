@@ -1,22 +1,22 @@
-# Event Optimizer
+# Event Optimiser
 
-An AI-powered platform that optimizes meeting and event locations for global teams, balancing travel time, CO₂ emissions, cost, and fairness across all attendees.
+An AI-powered platform that optimises meeting and event locations for global teams, balancing travel time, CO₂ emissions, cost, and fairness across all attendees.
 
 ## ✨ Visual Experience
 
-**Immersive 3D Globe Visualization** powered by Cesium.js:
+**Immersive 3D Globe Visualisation** powered by Cesium.js:
 
 - 🗺️ **Interactive 3D Globe**: Navigate and explore the world with a beautiful, interactive 3D globe showing all meeting locations and travel routes
 - ✈️ **Custom 3D Plane Models**: Animated airplane models fly along curved flight paths, synchronizing arrival times for dramatic visual effect
 - 🎨 **Curved Flight Path Arcs**: Realistic curved arcs connecting departure cities to the meeting destination, with color-coded travel times
 - 📍 **Smart Markers**:
   - Cyan markers for all departure cities (attendee origins)
-  - Gold star marker for the optimized event location
+  - Gold star marker for the optimised event location
   - Clear visual distinction between origins and destination
 - 🌐 **Dynamic Animations**: Planes animate along paths with realistic timing based on actual flight durations
 - 📊 **Real-Time Statistics**: Live updates of CO₂ emissions, travel times, and location details as you explore
 
-Experience the full visualization by planning a meeting and watching the globe come alive with flight paths, animated planes, and location markers!
+Experience the full visualisation by planning a meeting and watching the globe come alive with flight paths, animated planes, and location markers!
 
 ## 📊 Data Pipeline
 
@@ -32,7 +32,7 @@ Experience the full visualization by planning a meeting and watching the globe c
                                 │
                                 ▼
 ┌─────────────────────────────────────────────────────────────────────────────┐
-│                         API REQUEST (POST /optimize-event)                   │
+│                         API REQUEST (POST /optimise-event)                   │
 │  FastAPI endpoint receives JSON payload                                     │
 └──────────────────────────────┬──────────────────────────────────────────────┘
                                 │
@@ -52,14 +52,14 @@ Experience the full visualization by planning a meeting and watching the globe c
 │  • Create TravelEnvironment with scenario                                   │
 │  • Build candidate_locations (782 destinations, exact training order)        │
 │  • Create agents (one per attendee)                                          │
-│  • Build travel matrices (PARALLELIZED):                                     │
+│  • Build travel matrices (PARALLELISED):                                     │
 │    - For each agent × destination:                                          │
 │      * Travel time (hours)                                                   │
 │      * CO₂ emissions (kg)                                                     │
 │      * Distance (km)                                                          │
 │      * Timezone offset (hours)                                               │
 │      * Price (USD)                                                           │
-│  → Parallelized across agents using ThreadPoolExecutor                      │
+│  → Parallelised across agents using ThreadPoolExecutor                      │
 └──────────────────────────────┬──────────────────────────────────────────────┘
                                 │
                                 ▼
@@ -67,11 +67,11 @@ Experience the full visualization by planning a meeting and watching the globe c
 │                       OBSERVATION GENERATION                                 │
 │  • For each agent, build observation vector:                                │
 │    - For each of 782 candidates:                                             │
-│      * 6 normalized features: distance, timezone, flight_time, CO₂,          │
+│      * 6 normalised features: distance, timezone, flight_time, CO₂,          │
 │        price, combined                                                       │
 │    - 3 temporal features: start_day, end_day, event_duration                │
 │  → Total: 782×6 + 3 = 4,695 features per agent                              │
-│  → Normalized per-feature (preserves relative relationships)                │
+│  → Normalised per-feature (preserves relative relationships)                │
 └──────────────────────────────┬──────────────────────────────────────────────┘
                                 │
                                 ▼
@@ -124,7 +124,7 @@ Experience the full visualization by planning a meeting and watching the globe c
                                 │
                                 ▼
 ┌─────────────────────────────────────────────────────────────────────────────┐
-│                    FRONTEND VISUALIZATION                                    │
+│                    FRONTEND VISUALISATION                                    │
 │  • 3D Cesium Globe:                                                          │
 │    - Cyan markers: Departure cities (all attendees)                         │
 │    - Gold marker: Event location (star)                                      │
@@ -143,28 +143,28 @@ Experience the full visualization by planning a meeting and watching the globe c
 1. **Input** → Raw attendee data + time constraints
 2. **Caching** → Flight data pre-loaded into nested dictionaries (O(1) lookups)
 3. **Matrix Building** → Parallel computation across agents (782 destinations × N agents)
-4. **Normalization** → Per-feature scaling preserves CO₂/distance relationships
+4. **Normalisation** → Per-feature scaling preserves CO₂/distance relationships
 5. **Model Inference** → Multi-agent voting selects candidate location
 6. **Validation** → Override logic ensures optimal choice (may correct model)
 7. **Response** → Aggregated statistics + coordinates + scheduling
-8. **Visualization** → 3D globe with markers, paths, and animations
+8. **Visualisation** → 3D globe with markers, paths, and animations
 
 ### Performance Checkpoints
 
 - **Data Loading**: ~0s (pre-cached at startup)
-- **Environment Creation**: ~0.3s (parallelized matrix building)
+- **Environment Creation**: ~0.3s (parallelised matrix building)
 - **Model Prediction**: ~0.001s (batch processing)
 - **Validation**: ~0.01s (dictionary lookups)
 - **Total Response Time**: <1s for typical scenarios
 
 ## 🌟 Features
 
-- **AI-Powered Optimization**: Uses reinforcement learning (PPO) to find optimal meeting locations
+- **AI-Powered Optimisation**: Uses reinforcement learning (PPO) to find optimal meeting locations
 - **Multi-Factor Analysis**: Considers travel time, CO₂ emissions, distance, timezone differences, and cost
-- **3D Globe Visualization**: Interactive Cesium.js globe showing flight paths and attendee locations
-- **Sustainability Focus**: Prioritizes low CO₂ emissions while maintaining fairness
+- **3D Globe Visualisation**: Interactive Cesium.js globe showing flight paths and attendee locations
+- **Sustainability Focus**: Prioritises low CO₂ emissions while maintaining fairness
 - **Global Coverage**: Supports 782+ destinations worldwide
-- **Real-Time Calculations**: Sub-second response times for optimization requests
+- **Real-Time Calculations**: Sub-second response times for optimisation requests
 - **Weather Integration**: Displays weather forecasts for chosen locations
 - **Export Functionality**: Generate calendar files (.ics) and email summaries
 
@@ -181,7 +181,7 @@ Experience the full visualization by planning a meeting and watching the globe c
 ### Frontend
 
 - **React** with modern hooks
-- **Cesium.js** 3D globe visualization
+- **Cesium.js** 3D globe visualisation
 - **Tailwind CSS** for styling
 - **Vite** for fast development and building
 
@@ -309,14 +309,14 @@ The frontend will be available at `http://localhost:5173` (or the port Vite assi
 2. Specify availability window (start/end dates)
 3. Set event duration
 4. Click "Plan Meeting"
-5. View optimized location on 3D globe
+5. View optimised location on 3D globe
 6. Explore detailed statistics in expanded view
 
 ## 🧠 How It Works
 
-### Optimization Algorithm
+### Optimisation Algorithm
 
-The system uses **Proximal Policy Optimization (PPO)** reinforcement learning to:
+The system uses **Proximal Policy Optimisation (PPO)** reinforcement learning to:
 
 1. **Evaluate Candidates**: Consider 782+ global destinations
 2. **Calculate Metrics**: For each location, compute:
@@ -325,7 +325,7 @@ The system uses **Proximal Policy Optimization (PPO)** reinforcement learning to
    - Timezone convenience
    - Distance and cost
 3. **Apply Model Override**: If model suggests suboptimal choice, intelligent override selects better alternative
-4. **Balance Trade-offs**: Weighted optimization considering:
+4. **Balance Trade-offs**: Weighted optimisation considering:
    - 25% CO₂ emissions (sustainability)
    - 20% Flight time (convenience)
    - 25% Price (cost)
@@ -337,20 +337,20 @@ The system uses **Proximal Policy Optimization (PPO)** reinforcement learning to
 The RL model was trained on:
 
 - **300,000 timesteps** of reinforcement learning
-- **Per-feature normalization** to preserve relative relationships
+- **Per-feature normalisation** to preserve relative relationships
 - **Multi-agent environment** where each attendee votes on location
 - **Reward function** balancing CO₂, time, distance, and fairness
 
 ## 📊 Performance
 
-The system has been optimized for speed:
+The system has been optimised for speed:
 
 - **Environment Creation**: ~0.3 seconds (down from 127s)
 - **Model Prediction**: ~0.001 seconds
 - **Total Request Time**: <1 second for typical scenarios
 - **Concurrent Requests**: Supports 10-50 simultaneous requests
 
-See [PERFORMANCE_OPTIMIZATIONS.md](PERFORMANCE_OPTIMIZATIONS.md) for detailed optimization analysis.
+See [PERFORMANCE_OPTIMIZATIONS.md](PERFORMANCE_OPTIMIZATIONS.md) for detailed optimisation analysis.
 
 ## 🔧 Configuration
 
@@ -417,7 +417,7 @@ Tests cover:
 
 ## 🔄 Retraining the Model
 
-To retrain the model with updated normalization or hyperparameters:
+To retrain the model with updated normalisation or hyperparameters:
 
 ```bash
 cd backend
@@ -439,14 +439,14 @@ See [backend/RETRAIN_INSTRUCTIONS.md](backend/RETRAIN_INSTRUCTIONS.md) for detai
 ### Frontend
 
 - **React** - UI framework
-- **Cesium.js** - 3D globe and visualization
+- **Cesium.js** - 3D globe and visualisation
 - **Tailwind CSS** - Styling
 - **Vite** - Build tool
 - **Luxon** - Date/time handling
 
 ### AI/ML
 
-- **PPO (Proximal Policy Optimization)** - RL algorithm
+- **PPO (Proximal Policy Optimisation)** - RL algorithm
 - **Gymnasium** - RL environment interface
 - **Supersuit** - Environment wrappers
 
@@ -458,7 +458,7 @@ See [backend/RETRAIN_INSTRUCTIONS.md](backend/RETRAIN_INSTRUCTIONS.md) for detai
 - ✅ Weather forecasts
 - ✅ Calendar export (.ics)
 - ✅ Email summary generation
-- ✅ 3D flight path visualization
+- ✅ 3D flight path visualisation
 - ✅ Animated plane models
 - ✅ Per-attendee travel statistics
 
@@ -504,7 +504,7 @@ For internal team members, see:
 
 Potential improvements:
 
-- Multi-day event optimization
+- Multi-day event optimisation
 - Hotel/venue cost integration
 - Real-time flight pricing API integration
 - Machine learning model versioning
